@@ -299,7 +299,7 @@ function relation_to_sql() {
 
 
         if (pks.length > 0) {
-            let defaultString = `\n    ${colorString("CONSTRAINT",0,155,255)} ${r.name.toLowerCase()}_pk ${colorString("PRIMARY KEY",88,23,23)} (${pks.join(", ")})`
+            let defaultString = `\n    ${colorString("CONSTRAINT",0,155,255)} ${r.name.toLowerCase()}_pk ${colorString("PRIMARY KEY",187,0,255)} (${pks.join(", ")})`
             stringArray.push(defaultString)
         }
 
