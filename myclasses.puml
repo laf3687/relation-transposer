@@ -1,0 +1,195 @@
+@startuml myclasses
+
+<style>
+.weak {
+    RoundCorner 15
+}
+</style>
+
+skinparam nodesep 100
+skinparam ranksep 100
+
+object user {
+    user_id
+    --
+    username
+    first_name
+    middle_name
+    last_name
+    email
+    phone_num
+    birth_date
+    pronouns
+    nickname
+    hometown
+    homepage_link
+    profile_picture_link
+    --
+    <color:red>student_or_staff</color>
+}
+
+object login_info<<weak>> {
+    --
+    hashed_password
+}
+
+object course {
+    course_section
+    course_year
+    --
+    course_name
+    course_description
+}
+
+object announcements<<weak>> {
+    --
+    datetime_posted
+    annoucement
+}
+
+object gradable {
+    gradable_id
+    --
+    points
+    weight
+    start_date
+    due_date
+    <color:red>gradable_type</color>
+}
+
+object student_gradable<<weak>> {
+    --
+    grade_recieved
+    comment
+}
+
+object quiz<<weak>> {
+
+}
+
+object quiz_question<<weak>> {
+    question_number
+    --
+    question
+    
+}
+
+object question_answer<<weak>> {
+    --
+    answer
+    <color:red>answer_type</color>
+}
+
+
+object free_response<<weak>> {
+    ' --
+    ' answer
+}
+
+object multiple_choice<<weak>> {
+    --
+    is_answer
+}
+
+
+object discussion_forum<<weak>> {
+    --
+    discussion_details
+}
+
+object discussion_post {
+    post_id
+    --
+    message
+    <color:green>reply_id</color>
+
+}
+
+
+object assignment<<weak>> {
+
+    --
+    assignment_details
+    ' due_date
+}
+
+object student<<weak>> {
+
+}
+
+
+object staff<<weak>> {
+    --
+    --
+    <color:red>teacher_or_teacher_assistant</color>
+}
+
+object teacher<<weak>> {
+
+}
+
+object teacher_assistant<<weak>> {
+
+}
+
+
+object "d" as r01 {
+
+}
+object "d" as r02 {
+
+}
+object "d" as r03 {
+
+}
+object "d" as r04 {
+
+}
+
+user ||-r-|| login_info
+
+
+user -- r01
+user -- r01
+
+r01 -- student: is-a <
+r01 -- staff: is-a <
+
+staff -- r02
+staff -- r02
+
+r02 -- teacher: is-a <
+r02 -- teacher_assistant: is-a <
+
+gradable -- r03
+gradable -- r03
+
+r03 -- assignment: is-a <
+r03 -- quiz: is-a <
+r03 -- discussion_forum: is-a <
+
+user }o-l-o{ course
+
+course ||--o{ announcements
+
+course ||--o{ gradable
+
+discussion_forum ||--o{discussion_post
+
+discussion_post "\r\n post_id" ||--o{ "\n   reply_id" discussion_post : replies to 
+
+quiz ||--|{ quiz_question
+
+quiz_question ||--|{ question_answer
+
+question_answer -- r04
+question_answer -- r04
+
+r04 -- free_response: is-a <
+r04 -- multiple_choice: is-a <
+
+
+student ||--o{ student_gradable
+gradable ||--o{ student_gradable
+
+@enduml
