@@ -328,7 +328,7 @@ function relation_to_sql() {
                 attributeNames.push(reference.get("attributeName"))
                 referenceNames.push(reference.get("referenceName"))
             }
-            let defaultString = `\n    ${colorString("CONSTRAINT",0,155,255)} ${r.name.toLowerCase()}_${attribute}_fk ${colorString("FOREIGN KEY",210,210,23)} (${attributeNames.join(", ")}) ${colorString("REFERENCES",210,210,23)} ${attribute} (${referenceNames.join(", ")})`
+            let defaultString = `\n    ${colorString("CONSTRAINT",0,155,255)} ${r.name.toLowerCase()}_${attribute.toLocaleLowerCase()}_fk ${colorString("FOREIGN KEY",210,210,23)} (${attributeNames.join(", ")}) ${colorString("REFERENCES",210,210,23)} ${attribute.toLocaleLowerCase()} (${referenceNames.join(", ")})`
             defaultString += `\n        ${colorString("ON UPDATE CASCADE",255,255,255)}`
             defaultString += `\n        ${colorString("ON DELETE CASCADE",255,255,255)}`
             stringArray.push(defaultString)
@@ -569,8 +569,26 @@ const Connections = [
 
 ]
 
+
+// const Relations: {} = {
+//     AYY: {
+//         attributes: {
+//             a:true,
+//             b:false,
+//             c:false
+//         }
+//     },
+//     BEE: {
+//         attributes: {
+//             d:true,
+//             e:false
+//         },
+//         weak:true
+//     }
+// }
+
+// const Connections = [
+//     ["AYY","BEE",Cardinality.ONE_TO_MANY_ONE],
+// ]
+
 relation_to_sql()
-
-
-// console.log(`\x1b[38;2;${255};${0};${0}m${'yo'}\x1b[0m`)
-// console.log(colorString("hello",255,0,255))
