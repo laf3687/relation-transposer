@@ -98,7 +98,8 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
         // 5/14/26 new code to handle multi-connections A |--{ B, A |--{ B
         let duplicate_pk_connections = 0
         relation2.mustExistIn.forEach(connection => {
-            if (connection.attributeName === key.name) {
+            // console.log(connection)
+            if (connection.mainPKNameRecursive === key.name) {
                 duplicate_pk_connections++;
             }
         });
@@ -581,6 +582,10 @@ const Relations: {} = {
 }
 
 const Connections = [
+    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
+    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
+    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
+    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
     ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
     ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
 ]
