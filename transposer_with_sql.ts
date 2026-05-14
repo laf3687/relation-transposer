@@ -1,5 +1,5 @@
 "use strict";
-import {MustExistInConnection, Attribute, Relation, Connection} from "./erClasses.ts"
+import { MustExistInConnection, Attribute, Relation, Connection } from "./erClasses.ts"
 
 
 function colorString(text: string, r: number, g: number, b: number): string {
@@ -95,6 +95,18 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
             }
         }
 
+        // 5/14/26 new code to handle multi-connections A |--{ B, A |--{ B
+        let duplicate_pk_connections = 0
+        relation2.mustExistIn.forEach(connection => {
+            if (connection.attributeName === key.name) {
+                duplicate_pk_connections++;
+            }
+        });
+
+        if (duplicate_pk_connections > 0) {
+            keyName += "_" + (duplicate_pk_connections + 1)
+        }
+
         if (relation2.weak === true) { // new code to handle set weak entities
             pkBoolean = true
         }
@@ -172,74 +184,55 @@ function buildConnections(connections: any, relations: Map<String, Relation>): C
 
 
 // figure out a better way to do this (hashmap?)
+const relationshipConnectionsTable: any = {
+    // ----------------------1:1--------------------------
+    "ONE_TO_ZERO": { flipped: false, ignFK: false, isID: true, MtM: false, nNN: true },
+    "ZERO_TO_ONE": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: true },
+    "ONE_TO_ZERO_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: true },
+    "ZERO_TO_ONE_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: true },
+    // ----------------------1:M-------------------------
+    "ZERO_TO_MANY_ZERO": { flipped: false, ignFK: false, isID: true, MtM: false, nNN: false },
+    "ZERO_TO_MANY_ONE": { flipped: false, ignFK: false, isID: true, MtM: false, nNN: false },
+    "ONE_TO_MANY_ZERO": { flipped: false, ignFK: false, isID: true, MtM: false, nNN: true },
+    "ONE_TO_MANY_ONE": { flipped: false, ignFK: false, isID: true, MtM: false, nNN: true },
+    "ZERO_TO_MANY_ZERO_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: false },
+    "ZERO_TO_MANY_ONE_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: false },
+    "ONE_TO_MANY_ZERO_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: true },
+    "ONE_TO_MANY_ONE_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: true },
 
+    // ----------------------M:1-------------------------
+    "MANY_ZERO_TO_ZERO": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: false },
+    "MANY_ONE_TO_ZERO": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: false },
+    "MANY_ZERO_TO_ONE": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: true },
+    "MANY_ONE_TO_ONE": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: true },
+    "MANY_ZERO_TO_ZERO_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: false },
+    "MANY_ONE_TO_ZERO_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: false },
+    "MANY_ZERO_TO_ONE_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: true },
+    "MANY_ONE_TO_ONE_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: true },
+
+
+
+
+}
 function setConnection(relation1: Relation, relation2: Relation, connectionType: string) {
     // console.log("CONNECTION TYPE:"+connectionType)
     if (connectionType === Cardinality.SUPER_TO_SUBTYPE) {
         setSubtypeRelationConnection(relation1, relation2, "placeholder")
-    }
-    // ----------------------1:1--------------------------
-    if (connectionType === Cardinality.ONE_TO_ZERO) {
-        setOneToManyConnection(relation1, relation2, false, true, false, true)
-    }
-    if (connectionType === Cardinality.ZERO_TO_ONE) {
-        setOneToManyConnection(relation2, relation1, false, true, false, true)
-    }
-    if (connectionType === Cardinality.ONE_TO_ZERO_NID) {
-        setOneToManyConnection(relation1, relation2, false, false, false, true)
-    }
-    if (connectionType === Cardinality.ZERO_TO_ONE_NID) {
-        setOneToManyConnection(relation2, relation1, false, false, false, true)
-    }
-    // ----------------------1:M-------------------------
-    if (connectionType === Cardinality.ZERO_TO_MANY_ZERO) {
-        setOneToManyConnection(relation1, relation2, false, true, false, false)
-    }
-    if (connectionType === Cardinality.ZERO_TO_MANY_ONE) {
-        setOneToManyConnection(relation1, relation2, false, true, false, false)
-    }
-    if (connectionType === Cardinality.ONE_TO_MANY_ZERO) {
-        setOneToManyConnection(relation1, relation2, false, true, false, true)
-    }
-    if (connectionType === Cardinality.ONE_TO_MANY_ONE) {
-        setOneToManyConnection(relation1, relation2, false, true, false, true)
-    }
-    if (connectionType === Cardinality.ZERO_TO_MANY_ZERO_NID) {
-        setOneToManyConnection(relation1, relation2, false, false, false, false)
-    }
-    if (connectionType === Cardinality.ZERO_TO_MANY_ONE_NID) {
-        setOneToManyConnection(relation1, relation2, false, false, false, false)
-    }
-    if (connectionType === Cardinality.ONE_TO_MANY_ZERO_NID) {
-        setOneToManyConnection(relation1, relation2, false, false, false, true)
-    }
-    if (connectionType === Cardinality.ONE_TO_MANY_ONE_NID) {
-        setOneToManyConnection(relation1, relation2, false, false, false, true)
-    }
-    // --------------------M:1---------------------------
-    if (connectionType === Cardinality.MANY_ZERO_TO_ZERO) {
-        setOneToManyConnection(relation2, relation1, false, true, false, false)
-    }
-    if (connectionType === Cardinality.MANY_ONE_TO_ZERO) {
-        setOneToManyConnection(relation2, relation1, false, true, false, false)
-    }
-    if (connectionType === Cardinality.MANY_ZERO_TO_ONE) {
-        setOneToManyConnection(relation2, relation1, false, true, false, true)
-    }
-    if (connectionType === Cardinality.MANY_ONE_TO_ONE) {
-        setOneToManyConnection(relation2, relation1, false, true, false, true)
-    }
-    if (connectionType === Cardinality.MANY_ZERO_TO_ZERO_NID) {
-        setOneToManyConnection(relation2, relation1, false, false, false, false)
-    }
-    if (connectionType === Cardinality.MANY_ONE_TO_ZERO_NID) {
-        setOneToManyConnection(relation2, relation1, false, false, false, false)
-    }
-    if (connectionType === Cardinality.MANY_ZERO_TO_ONE_NID) {
-        setOneToManyConnection(relation2, relation1, false, false, false, true)
-    }
-    if (connectionType === Cardinality.MANY_ONE_TO_ONE_NID) {
-        setOneToManyConnection(relation2, relation1, false, false, false, true)
+    } else if (relationshipConnectionsTable[connectionType] !== null) {
+        const conn = relationshipConnectionsTable[connectionType]
+        if (conn.flipped) {
+            [relation1, relation2] = [relation2, relation1]
+        }
+        setOneToManyConnection(
+            relation1,
+            relation2,
+            conn.ignFK,
+            conn.isID,
+            conn.MtM,
+            conn.nNN
+        )
+    } else {
+        throw new Error("this connection does not exist")
     }
 }
 
@@ -268,27 +261,27 @@ function relation_to_sql() {
     //     console.log(`DROP TABLE IF EXISTS ${r.name.toLowerCase()};`)
     // })
     relations.forEach(r => {
-        let createStatement = `${colorString("CREATE TABLE",0,155,255)} ${colorString(r.name.toLowerCase(),255,255,255)} (`
+        let createStatement = `${colorString("CREATE TABLE", 0, 155, 255)} ${colorString(r.name.toLowerCase(), 255, 255, 255)} (`
         let stringArray: string[] = []
         let displayedFKComment = false
         r.getAttributes().forEach(a => {
             let defaultString = `\n    ${a.name} `
             if (a.datatype) {
-                defaultString += colorString(a.datatype,100,241,153)
+                defaultString += colorString(a.datatype, 100, 241, 153)
             } else {
                 defaultString += "___________"
             }
             if (a.isForeignKey() && !displayedFKComment) {
-                stringArray.push(`\n\n    ${colorString("# ----[ FOREIGN KEYS ]----",188,20,34)}`)
+                stringArray.push(`\n\n    ${colorString("# ----[ FOREIGN KEYS ]----", 188, 20, 34)}`)
                 displayedFKComment = true;
             }
             if (a.isForeignKey() && !a.isIdentifier() && a.foriegnKeyNotNULL == true) { // if FK and NOT PK and if it is signified from a 1 on the ER diagram, Not Null is required.
-                defaultString += colorString(" NOT NULL",255,40,40)
+                defaultString += colorString(" NOT NULL", 255, 40, 40)
             }
 
             stringArray.push(defaultString)
         })
-        stringArray.push(`\n\n    ${colorString("# ----[ CONSTRAINTS ]----",188,20,34)}`)
+        stringArray.push(`\n\n    ${colorString("# ----[ CONSTRAINTS ]----", 188, 20, 34)}`)
         let pks: string[] = [] // primary key names
 
         r.getAttributes().forEach(a => {
@@ -299,11 +292,11 @@ function relation_to_sql() {
 
 
         if (pks.length > 0) {
-            let defaultString = `\n    ${colorString("CONSTRAINT",0,155,255)} ${r.name.toLowerCase()}_pk ${colorString("PRIMARY KEY",187,0,255)} (${pks.join(", ")})`
+            let defaultString = `\n    ${colorString("CONSTRAINT", 0, 155, 255)} ${r.name.toLowerCase()}_pk ${colorString("PRIMARY KEY", 187, 0, 255)} (${pks.join(", ")})`
             stringArray.push(defaultString)
         }
 
-        let meiMap = new Map<String,Map<String,String>[]>()
+        let meiMap = new Map<String, Map<String, String>[]>()
 
         r.mustExistIn.forEach(m => {
             let attributeName = m.attributeName
@@ -316,21 +309,21 @@ function relation_to_sql() {
                 meiMap.set(relationName, [])
             }
             let bruh = new Map()
-            bruh.set("attributeName",attributeName)
-            bruh.set("referenceName",referenceName)
+            bruh.set("attributeName", attributeName)
+            bruh.set("referenceName", referenceName)
             meiMap.get(relationName)?.push(bruh)
         })
 
-        meiMap.forEach((params,attribute) => {
+        meiMap.forEach((params, attribute) => {
             let attributeNames = []
             let referenceNames = []
             for (let reference of params) {
                 attributeNames.push(reference.get("attributeName"))
                 referenceNames.push(reference.get("referenceName"))
             }
-            let defaultString = `\n    ${colorString("CONSTRAINT",0,155,255)} ${r.name.toLowerCase()}_${attribute.toLocaleLowerCase()}_fk ${colorString("FOREIGN KEY",210,210,23)} (${attributeNames.join(", ")}) ${colorString("REFERENCES",210,210,23)} ${attribute.toLocaleLowerCase()} (${referenceNames.join(", ")})`
-            defaultString += `\n        ${colorString("ON UPDATE CASCADE",255,255,255)}`
-            defaultString += `\n        ${colorString("ON DELETE CASCADE",255,255,255)}`
+            let defaultString = `\n    ${colorString("CONSTRAINT", 0, 155, 255)} ${r.name.toLowerCase()}_${attribute.toLocaleLowerCase()}_fk ${colorString("FOREIGN KEY", 210, 210, 23)} (${attributeNames.join(", ")}) ${colorString("REFERENCES", 210, 210, 23)} ${attribute.toLocaleLowerCase()} (${referenceNames.join(", ")})`
+            defaultString += `\n        ${colorString("ON UPDATE CASCADE", 255, 255, 255)}`
+            defaultString += `\n        ${colorString("ON DELETE CASCADE", 255, 255, 255)}`
             stringArray.push(defaultString)
         })
         createStatement += stringArray.join(",")
@@ -339,256 +332,276 @@ function relation_to_sql() {
     })
 }
 
-const Relations: {} = {
-    user: {
-        attributes: {
-            user_id: true,
-            username: false,
-            first_name: false,
-            middle_name: false,
-            last_name: false,
-            email: false,
-            phone_num: false,
-            birth_date: false,
-            pronouns: false,
-            nickname: false,
-            hometown: false,
-            homepage_link: false,
-            profile_picture_link: false,
-            student_or_staff: false,
-        },
-        datatypes: {
-            user_id: "INT UNSIGNED AUTO_INCREMENT",
-            username: "VARCHAR(50) UNIQUE NOT NULL",
-            first_name: "VARCHAR(50)",
-            middle_name: "VARCHAR(50)",
-            last_name: "VARCHAR(50)",
-            email: "VARCHAR(255) NOT NULL",
-            phone_num: "VARCHAR(50)",
-            birth_date: "DATE",
-            pronouns: "VARCHAR(50)",
-            nickname: "VARCHAR(50)",
-            hometown: "VARCHAR(50)",
-            homepage_link: "VARCHAR(255)",
-            profile_picture_link: "VARCHAR(255)",
-            student_or_staff: "ENUM('student','teacher') NOT NULL",
-        }
-    },
-
-    student: {
-        attributes: {
-
-        }
-    },
-
-    staff: {
-        attributes: {
-            teacher_or_teacher_assistant: false 
-        },
-        datatypes: {
-            teacher_or_teacher_assistant: "ENUM('teacher','teacher_assistant') NOT NULL"
-        }
-    },
-
-    teacher: {
-        attributes: {
-
-        }
-    },
-
-    teacher_assistant: { 
-        attributes: {
-
-        }
-    },
-
-    login_info: {
-        attributes: {
-            hashed_password:false
-        },
-        datatypes: {
-            hashed_password:"VARCHAR(255)"
-        },
-        weak:true
-    },
-
-    course: {
-        attributes: {
-            course_section: true,
-            course_year: true,
-            course_name: false,
-            course_description: false,
-        },
-        datatypes: {
-            course_section: "INT UNSIGNED",
-            course_year: "YEAR",
-            course_name: "VARCHAR(50)",
-            course_description: "VARCHAR(255)",
-        }
-    },
-    announcements: {
-        attributes: {
-            datetime_posted: false,
-            announcement: false
-        },
-        datatypes:{
-            datetime_posted: "DATETIME",
-            announcement: "VARCHAR(2000)"
-        },
-        weak: true,
-    },
-    gradable: {
-        attributes: {
-            gradable_id: true,
-            points: false,
-            weight: false,
-            start_date: false,
-            due_date: false,
-            gradable_type: false,
-        },
-        datatypes: {
-            gradable_id: "INT UNSIGNED AUTO_INCREMENT",
-            points: "INT",
-            weight: "DECIMAL(5,2)",
-            start_date: "DATETIME",
-            due_date: "DATETIME",
-            gradable_type: "ENUM('quiz','discussion_forum','assignment')",
-        }
-    },
-
-    student_gradable:{ 
-        attributes: {
-            grade_received:false,
-            comment:false,
-        },
-        weak:true,
-        datatypes: {
-            grade_received:"INT",
-            comment:"VARCHAR(2000)",
-        }
-    },
-
-
-    assignment: {
-        attributes: {
-            assignment_details: false
-        },
-        datatypes: {
-            assignment_details: "VARCHAR(500)"
-        }
-    },
-    discussion_forum: {
-        attributes: {
-            discussion_details: false,
-        },
-        datatypes: {
-            discussion_details: "VARCHAR(500)"
-        }
-        // weak: true,
-    },
-    discussion_post: {
-        attributes: {
-            post_id: true,
-            message: false
-            // reply_id
-        },
-        datatypes: {
-            post_id: "INT UNSIGNED AUTO_INCREMENT",
-            message: "VARCHAR(2000)"
-        }
-    },
-    quiz: {
-        attributes: {
-
-        },
-        weak: true,
-    },
-    quiz_question: {
-        attributes: {
-            question_number: true,
-            question: false,
-        },
-        datatypes: {
-            question_number: "INT UNSIGNED AUTO_INCREMENT",
-            question: "VARCHAR(500)"
-        },
-        weak: true
-    },
-
-    question_answer: {
-        attributes: {
-            answer:false,
-            answer_type: false
-        },
-        datatypes:{
-            answer:"VARCHAR(500)",
-            answer_type:"ENUM ('free_response','multiple_choice')"
-        },
-        weak: true,
-    },
-
-
-    free_response: {
-        attributes: {
-            // answer: false
-        }
-    },
-    multiple_choice: {
-        attributes: {
-            is_answer: false
-        },
-        datatypes: {
-            is_answer: "TINYINT(1)"
-        }
-    }
-}
-
-const Connections = [
-    ["user", "course", Cardinality.MANY_TO_MANY],
-
-    ["user","login_info",Cardinality.ONE_TO_MANY_ONE],
-    ["course", "gradable", Cardinality.ONE_TO_MANY_ZERO],
-    ["course", "announcements", Cardinality.ONE_TO_MANY_ZERO],
-    ["gradable", "quiz", Cardinality.SUPER_TO_SUBTYPE],
-    ["gradable", "discussion_forum", Cardinality.SUPER_TO_SUBTYPE],
-    ["gradable", "assignment", Cardinality.SUPER_TO_SUBTYPE],
-    ["discussion_forum", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
-    ["discussion_post", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
-    ["quiz", "quiz_question", Cardinality.ONE_TO_MANY_ONE],
-    ["quiz_question", "question_answer", Cardinality.ONE_TO_MANY_ONE],
-    ["question_answer", "free_response", Cardinality.SUPER_TO_SUBTYPE],
-    ["question_answer", "multiple_choice", Cardinality.SUPER_TO_SUBTYPE],
-
-    ["user","student",Cardinality.SUPER_TO_SUBTYPE],
-    ["user","staff",Cardinality.SUPER_TO_SUBTYPE],
-    ["staff","teacher",Cardinality.SUPER_TO_SUBTYPE],
-    ["staff","teacher_assistant",Cardinality.SUPER_TO_SUBTYPE],
-
-    ["student","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
-    ["gradable","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
-
-]
-
-
 // const Relations: {} = {
-//     AYY: {
+//     user: {
 //         attributes: {
-//             a:true,
-//             b:false,
-//             c:false
+//             user_id: true,
+//             username: false,
+//             first_name: false,
+//             middle_name: false,
+//             last_name: false,
+//             email: false,
+//             phone_num: false,
+//             birth_date: false,
+//             pronouns: false,
+//             nickname: false,
+//             hometown: false,
+//             homepage_link: false,
+//             profile_picture_link: false,
+//             student_or_staff: false,
+//         },
+//         datatypes: {
+//             user_id: "INT UNSIGNED AUTO_INCREMENT",
+//             username: "VARCHAR(50) UNIQUE NOT NULL",
+//             first_name: "VARCHAR(50)",
+//             middle_name: "VARCHAR(50)",
+//             last_name: "VARCHAR(50)",
+//             email: "VARCHAR(255) NOT NULL",
+//             phone_num: "VARCHAR(50)",
+//             birth_date: "DATE",
+//             pronouns: "VARCHAR(50)",
+//             nickname: "VARCHAR(50)",
+//             hometown: "VARCHAR(50)",
+//             homepage_link: "VARCHAR(255)",
+//             profile_picture_link: "VARCHAR(255)",
+//             student_or_staff: "ENUM('student','teacher') NOT NULL",
 //         }
 //     },
-//     BEE: {
+
+//     student: {
 //         attributes: {
-//             d:true,
-//             e:false
+
+//         }
+//     },
+
+//     staff: {
+//         attributes: {
+//             teacher_or_teacher_assistant: false 
+//         },
+//         datatypes: {
+//             teacher_or_teacher_assistant: "ENUM('teacher','teacher_assistant') NOT NULL"
+//         }
+//     },
+
+//     teacher: {
+//         attributes: {
+
+//         }
+//     },
+
+//     teacher_assistant: { 
+//         attributes: {
+
+//         }
+//     },
+
+//     login_info: {
+//         attributes: {
+//             hashed_password:false
+//         },
+//         datatypes: {
+//             hashed_password:"VARCHAR(255)"
 //         },
 //         weak:true
+//     },
+
+//     course: {
+//         attributes: {
+//             course_section: true,
+//             course_year: true,
+//             course_name: false,
+//             course_description: false,
+//         },
+//         datatypes: {
+//             course_section: "INT UNSIGNED",
+//             course_year: "YEAR",
+//             course_name: "VARCHAR(50)",
+//             course_description: "VARCHAR(255)",
+//         }
+//     },
+//     announcements: {
+//         attributes: {
+//             datetime_posted: false,
+//             announcement: false
+//         },
+//         datatypes:{
+//             datetime_posted: "DATETIME",
+//             announcement: "VARCHAR(2000)"
+//         },
+//         weak: true,
+//     },
+//     gradable: {
+//         attributes: {
+//             gradable_id: true,
+//             points: false,
+//             weight: false,
+//             start_date: false,
+//             due_date: false,
+//             gradable_type: false,
+//         },
+//         datatypes: {
+//             gradable_id: "INT UNSIGNED AUTO_INCREMENT",
+//             points: "INT",
+//             weight: "DECIMAL(5,2)",
+//             start_date: "DATETIME",
+//             due_date: "DATETIME",
+//             gradable_type: "ENUM('quiz','discussion_forum','assignment')",
+//         }
+//     },
+
+//     student_gradable:{ 
+//         attributes: {
+//             grade_received:false,
+//             comment:false,
+//         },
+//         weak:true,
+//         datatypes: {
+//             grade_received:"INT",
+//             comment:"VARCHAR(2000)",
+//         }
+//     },
+
+
+//     assignment: {
+//         attributes: {
+//             assignment_details: false
+//         },
+//         datatypes: {
+//             assignment_details: "VARCHAR(500)"
+//         }
+//     },
+//     discussion_forum: {
+//         attributes: {
+//             discussion_details: false,
+//         },
+//         datatypes: {
+//             discussion_details: "VARCHAR(500)"
+//         }
+//         // weak: true,
+//     },
+//     discussion_post: {
+//         attributes: {
+//             post_id: true,
+//             message: false
+//             // reply_id
+//         },
+//         datatypes: {
+//             post_id: "INT UNSIGNED AUTO_INCREMENT",
+//             message: "VARCHAR(2000)"
+//         }
+//     },
+//     quiz: {
+//         attributes: {
+
+//         },
+//         weak: true,
+//     },
+//     quiz_question: {
+//         attributes: {
+//             question_number: true,
+//             question: false,
+//         },
+//         datatypes: {
+//             question_number: "INT UNSIGNED AUTO_INCREMENT",
+//             question: "VARCHAR(500)"
+//         },
+//         weak: true
+//     },
+
+//     question_answer: {
+//         attributes: {
+//             answer:false,
+//             answer_type: false
+//         },
+//         datatypes:{
+//             answer:"VARCHAR(500)",
+//             answer_type:"ENUM ('free_response','multiple_choice')"
+//         },
+//         weak: true,
+//     },
+
+
+//     free_response: {
+//         attributes: {
+//             // answer: false
+//         }
+//     },
+//     multiple_choice: {
+//         attributes: {
+//             is_answer: false
+//         },
+//         datatypes: {
+//             is_answer: "TINYINT(1)"
+//         }
 //     }
 // }
 
 // const Connections = [
-//     ["AYY","BEE",Cardinality.ONE_TO_MANY_ONE],
+//     ["user", "course", Cardinality.MANY_TO_MANY],
+
+//     ["user","login_info",Cardinality.ONE_TO_MANY_ONE],
+//     ["course", "gradable", Cardinality.ONE_TO_MANY_ZERO],
+//     ["course", "announcements", Cardinality.ONE_TO_MANY_ZERO],
+//     ["gradable", "quiz", Cardinality.SUPER_TO_SUBTYPE],
+//     ["gradable", "discussion_forum", Cardinality.SUPER_TO_SUBTYPE],
+//     ["gradable", "assignment", Cardinality.SUPER_TO_SUBTYPE],
+//     ["discussion_forum", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
+//     ["discussion_post", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
+//     ["quiz", "quiz_question", Cardinality.ONE_TO_MANY_ONE],
+//     ["quiz_question", "question_answer", Cardinality.ONE_TO_MANY_ONE],
+//     ["question_answer", "free_response", Cardinality.SUPER_TO_SUBTYPE],
+//     ["question_answer", "multiple_choice", Cardinality.SUPER_TO_SUBTYPE],
+
+//     ["user","student",Cardinality.SUPER_TO_SUBTYPE],
+//     ["user","staff",Cardinality.SUPER_TO_SUBTYPE],
+//     ["staff","teacher",Cardinality.SUPER_TO_SUBTYPE],
+//     ["staff","teacher_assistant",Cardinality.SUPER_TO_SUBTYPE],
+
+//     ["student","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
+//     ["gradable","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
+
+// ]
+
+
+const Relations: {} = {
+    USER: {
+        attributes: {
+            user_id: true,
+            username: false
+        },
+        datatypes: {
+            user_id: "INT UNSIGNED AUTO_INCREMENT",
+            username: "VARCHAR(20)"
+        }
+    },
+
+    FRIEND: {
+        weak: true
+    }
+}
+
+const Connections = [
+    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
+    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
+]
+
+// const Relations: {} = {
+//     A: {
+//         attributes: {
+//             a: true,
+//             b: false,
+//         }
+//     },
+//     B: {
+//         attributes: {
+//             c: true,
+//             d: false
+//         }
+//     }
+// }
+
+// const Connections = [
+//     ["A", "B", Cardinality.ZERO_TO_ONE]
 // ]
 
 relation_to_sql()
