@@ -141,19 +141,40 @@ export class Relation {
         let mei = ""
         if (this.mustExistIn.length > 0) {
             mei += "\n\t"
-            for (let _ in this.mustExistIn) {
-                let i = parseInt(_)
-                let connection = this.mustExistIn[i]
-                // console.log(connection)
-                let attributeName = connection.attributeName
-                if (connection.mainPKNameRecursive !== "null") {
-                    attributeName = connection.mainPKNameRecursive
+            let meiMap = new Map<String, Map<String, String>[]>()
+            // 5/15/26  must exist in new formatting (matches RIT standard)
+            for (let m of this.mustExistIn) {
+                let attributeName = m.attributeName
+                let referenceName = m.attributeName
+                if (m.mainPKNameRecursive !== "null") {
+                    referenceName = m.mainPKNameRecursive
                 }
-                mei += `${this.name}(${connection.attributeName}) mei ${connection.relationConnection.name}(${attributeName})`
-                if (i < this.mustExistIn.length - 1) {
+                let relationName = m.relationConnection.name
+                if (!meiMap.has(relationName)) {
+                    meiMap.set(relationName, [])
+                }
+                let referenceObject = new Map()
+                referenceObject.set("attributeName", attributeName)
+                referenceObject.set("referenceName", referenceName)
+                meiMap.get(relationName)?.push(referenceObject)
+            }
+
+            // console.log(meiMap)
+            let i = 0
+            meiMap.forEach((params, attribute) => {
+                let attributeNames = []
+                let referenceNames = []
+                for (let reference of params) {
+                    attributeNames.push(reference.get("attributeName"))
+                    referenceNames.push(reference.get("referenceName"))
+                }
+                mei += `${this.name}(${attributeNames.join(", ")}) mei ${attribute}(${referenceNames.join(", ")})`
+
+                if (i < meiMap.size - 1) {
                     mei += "\n\t"
                 }
-            }
+                i++
+            })
         }
         return this.name + "(" + arr.join(", ") + ")" + mei
     }

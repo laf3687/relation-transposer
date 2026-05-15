@@ -2,6 +2,10 @@
 import { MustExistInConnection, Attribute, Relation, Connection } from "./erClasses.ts"
 
 
+const allowMultiConnections = true;
+const allowRecursiveDistinctRelationBeta = true;
+
+
 function colorString(text: string, r: number, g: number, b: number): string {
     return `\x1b[38;2;${r};${g};${b}m${text}\x1b[0m`
 }
@@ -75,8 +79,17 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
         }
         let keyName = key.name
         let pkBoolean = false
+
+
+        if (relation2.getAttribute(keyName)) {
+            if (allowRecursiveDistinctRelationBeta) {
+                keyName = keyName + "_" + relation1.name.toLowerCase()
+            } else {
+                throw new Error("Error. Major error happened, or Recursive Relationships with Distinct Relations is not enabled.")
+            }
+        }
+
         if (manyToMany) {
-            // console.log("M:M")
             pkBoolean = true
         }
         if (recursive) {
@@ -98,14 +111,17 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
         // 5/14/26 new code to handle multi-connections A |--{ B, A |--{ B
         let duplicate_pk_connections = 0
         relation2.mustExistIn.forEach(connection => {
-            // console.log(connection)
             if (connection.mainPKNameRecursive === key.name) {
                 duplicate_pk_connections++;
             }
         });
 
         if (duplicate_pk_connections > 0) {
-            keyName += "_" + (duplicate_pk_connections + 1)
+            if (allowMultiConnections) {
+                keyName += "_" + (duplicate_pk_connections + 1)
+            } else { // 5/15/26 new code to handle multi-connections 
+                throw new Error("Multi connection is not enabled. Enable the constant allowMultiConnections at the top of this file.")
+            }
         }
 
         if (relation2.weak === true) { // new code to handle set weak entities
@@ -216,7 +232,6 @@ const relationshipConnectionsTable: any = {
 
 }
 function setConnection(relation1: Relation, relation2: Relation, connectionType: string) {
-    // console.log("CONNECTION TYPE:"+connectionType)
     if (connectionType === Cardinality.SUPER_TO_SUBTYPE) {
         setSubtypeRelationConnection(relation1, relation2, "placeholder")
     } else if (relationshipConnectionsTable[connectionType] !== null) {
@@ -233,7 +248,7 @@ function setConnection(relation1: Relation, relation2: Relation, connectionType:
             conn.nNN
         )
     } else {
-        throw new Error("this connection does not exist")
+        throw new Error("this connection type does not exist")
     }
 }
 
@@ -309,10 +324,10 @@ function relation_to_sql() {
             if (!meiMap.has(relationName)) {
                 meiMap.set(relationName, [])
             }
-            let bruh = new Map()
-            bruh.set("attributeName", attributeName)
-            bruh.set("referenceName", referenceName)
-            meiMap.get(relationName)?.push(bruh)
+            let referenceObject = new Map()
+            referenceObject.set("attributeName", attributeName)
+            referenceObject.set("referenceName", referenceName)
+            meiMap.get(relationName)?.push(referenceObject)
         })
 
         meiMap.forEach((params, attribute) => {
@@ -564,49 +579,59 @@ function relation_to_sql() {
 // ]
 
 
+// const Relations: {} = {
+//     USER: {
+//         attributes: {
+//             user_id: true,
+//             username: false
+//         },
+//         datatypes: {
+//             user_id: "INT UNSIGNED AUTO_INCREMENT",
+//             username: "VARCHAR(20)"
+//         }
+//     },
+
+//     FRIEND: {
+//         attributes: {
+//             friend_contact_status: true
+//         },
+//         weak: true
+//     }
+// }
+
+// const Connections = [
+//     ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
+//     ["FRIEND","USER",Cardinality.ONE_TO_MANY_ZERO],
+// ]
+
 const Relations: {} = {
-    USER: {
+    A: {
         attributes: {
-            user_id: true,
-            username: false
-        },
-        datatypes: {
-            user_id: "INT UNSIGNED AUTO_INCREMENT",
-            username: "VARCHAR(20)"
+            a: true,
+            b: false,
         }
     },
-
-    FRIEND: {
+    B: {
+        attributes: {
+            c: true,
+            bruh: true,
+            d: false
+        },
+        weak: false
+    },
+    C: {
+        attributes: {
+            e: false,
+            f: false
+        },
         weak: true
     }
 }
 
 const Connections = [
-    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
-    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
-    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
-    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
-    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
-    ["USER","FRIEND",Cardinality.ONE_TO_MANY_ZERO],
+    ["A", "B", Cardinality.ONE_TO_ZERO],
+    ["A", "C", Cardinality.ONE_TO_ZERO],
+    ["B", "C", Cardinality.ONE_TO_ZERO]
 ]
-
-// const Relations: {} = {
-//     A: {
-//         attributes: {
-//             a: true,
-//             b: false,
-//         }
-//     },
-//     B: {
-//         attributes: {
-//             c: true,
-//             d: false
-//         }
-//     }
-// }
-
-// const Connections = [
-//     ["A", "B", Cardinality.ZERO_TO_ONE]
-// ]
 
 relation_to_sql()
