@@ -1,9 +1,11 @@
 "use strict";
-import { MustExistInConnection, Attribute, Relation, Connection } from "./erClasses.ts"
+import { MustExistInConnection, Attribute, Relation, Connection, Queue } from "./erClasses.ts"
 
 
 const allowMultiConnections = true;
 const allowRecursiveDistinctRelationBeta = true;
+
+const theLazyWay = true;
 
 
 function colorString(text: string, r: number, g: number, b: number): string {
@@ -294,8 +296,113 @@ function setConnection(relation1: Relation, relation2: Relation, connectionType:
 function transpose(rls: Object, cctns: string[][] | any[]) {
     let relations = buildRelations(rls)
     let connections = buildConnections(cctns, relations)
+
+    // theLazyWay is a VERY SLOW algorithm I made so no matter the order of connections insert, it will always transpose correctly
+    // might refactor later if its genuinely too slow
+    if (theLazyWay) {
+        console.log("doing it the lazy way (SLOWER)")
+
+        const relMapByHits = new Map<Relation, number>()
+        const connectionIndex = new Map<Relation, Connection[]>()
+        const MtMConnections: Connection[] = []
+        relations.forEach((relation) => {
+            relMapByHits.set(relation, 0)
+            connections.forEach((c) => {
+                // console.log(c.relation1?.name,c.relation2?.name)
+                if (c.connectionType in relationshipConnectionsTable || c.connectionType == Cardinality.SUPER_TO_SUBTYPE) {
+                    let r1 = c.getRelation1()
+                    let r2 = c.getRelation2()
+                    let rlConnTypeData = relationshipConnectionsTable[c.connectionType]
+                    if (rlConnTypeData && rlConnTypeData.flipped) {
+                        [r1, r2] = [r2, r1]
+                    }
+                    if (relation === r2) {
+                        // console.log("HIT")
+                        let newNum = relMapByHits.get(relation) || 0 // should NEVER trigger 0 but ok bruh.
+                        relMapByHits.set(relation, newNum + 1)
+                        if (!connectionIndex.has(relation)) {
+                            connectionIndex.set(relation, [])
+                        }
+                        connectionIndex.get(relation)?.push(c)
+                    }
+                }
+            })
+        })
+
+        connections.forEach((c) => {
+            if (c.connectionType === Cardinality.MANY_TO_MANY) {
+                MtMConnections.push(c)
+            }
+        })
+
+
+        // console.log(relMapByHits)
+        let maxConnections = 0
+        const relMapByHitsFlipped = new Map<number, Set<Relation>>()
+        relMapByHits.forEach((v, k) => {
+            if (!relMapByHitsFlipped.has(v)) {
+                relMapByHitsFlipped.set(v, new Set<Relation>())
+            }
+            relMapByHitsFlipped.get(v)?.add(k)
+            if (v > maxConnections) {
+                maxConnections = v
+            }
+        })
+
+        // create new connections + map for relations in order
+        relations = new Map<string, Relation>()
+        connections = []
+        for (let i = 0; i <= maxConnections; i++) {
+            if (relMapByHitsFlipped.has(i)) {
+                console.log(i)
+                let relationLayerSet = relMapByHitsFlipped.get(i)
+                let thisLayerFinishedConnections = new Set<Relation>()
+                // let thisLayerUnFinishedConnections = new Set<Relation>()
+                let thisLayerQueue = new Queue<Connection>()
+                relationLayerSet?.forEach((relationObject, k) => {
+                    console.log(colorString(k.name + "", 255, 125, 255))
+                    if (i == 0) {
+                        relations.set(relationObject.name, relationObject)
+                    }
+
+
+                    let connectionLayerSet = connectionIndex.get(relationObject)
+                    connectionLayerSet?.forEach((conn) => {
+                        if (relationLayerSet.has(conn.getRelation1()) && !thisLayerFinishedConnections.has(conn.getRelation1())) {
+                            console.log("placing " + k.name + " in queue due to premature connection!")
+                            thisLayerQueue.enqueue(conn)
+                        } else {
+                            connections.push(conn)
+                            thisLayerFinishedConnections.add(relationObject)
+                        }
+                        console.log(`${conn.getRelation1().name} -> ${conn.getRelation2().name}`)
+                    })
+                    if (thisLayerFinishedConnections.has(relationObject)) {
+                        relations.set(relationObject.name, relationObject)
+                    }
+                })
+
+                while (!thisLayerQueue.isEmpty()) {
+                    let connectionObject = thisLayerQueue.dequeue()
+                    connections.push(connectionObject)
+                    // please fix this later. rel2 is for the missing object
+                    relations.set(connectionObject.getRelation2().name, connectionObject.getRelation2())
+                }
+
+            }
+        }
+
+        for (let remainingConnection of MtMConnections) {
+            // console.log(remainingConnection)
+            connections.push(remainingConnection)
+        }
+    }
+
+
+
     connections.forEach(c => {
         if (c.connectionType == "MANY_TO_MANY") {
+            // console.log("MtM INITIATING!!!!!!!!!!!!!11")
             let newRelation = setManyToManyConnection(c.getRelation1(), c.getRelation2(), [])
             relations.set(newRelation.name, newRelation)
         } else {
@@ -308,6 +415,61 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
     })
     return relations;
 }
+
+
+
+
+// const Relations: {} = {
+//     C: {
+//         attributes: {
+//             d: true
+//         },
+//     },
+//     A: {
+//         attributes: {
+//             a: true,
+//             b: false
+//         }
+//     },
+//     E: {
+//         attributes: {
+//             f: false
+//         },
+//         weak: true
+//     },
+//     B: {
+//         attributes: {
+//             c: false
+//         }
+//     },
+//     D: {
+//         attributes: {
+//             e: false
+//         }
+//     }
+
+// }
+
+// const Connections = [
+//     ["B", "E", Cardinality.ONE_TO_MANY_ZERO],
+
+//     ["A", "B", Cardinality.SUPER_TO_SUBTYPE],
+//     ["B", "C", Cardinality.ONE_TO_MANY_ZERO],
+//     // ["A", "C", Cardinality.ONE_TO_MANY_ZERO],
+//     ["B", "D", Cardinality.ONE_TO_MANY_ZERO],
+
+// ]
+
+
+
+
+
+
+
+
+
+
+
 
 function relation_to_sql() {
     let relations = transpose(Relations, Connections);
@@ -621,6 +783,8 @@ const Connections = [
 ]
 
 
+
+
 // const Relations: {} = {
 //     EMPLOYEE: {
 //         attributes: {
@@ -686,8 +850,8 @@ const Connections = [
 //     },
 //     PHONE: {
 //         attributes: {
-//             phone_number:true,
-//             phone_type_desc:false,
+//             phone_number: true,
+//             phone_type_desc: false,
 //         }
 //     },
 //     CONTACT: {
@@ -741,17 +905,17 @@ const Connections = [
 // }
 
 // const Connections = [
-//     ["COMPANY","CONTACT",Cardinality.ZERO_TO_MANY_ZERO],
-//     ["COMPANY","COMPANY",Cardinality.ZERO_TO_MANY_ZERO],
-//     ["CONTACT","PHONE",Cardinality.MANY_TO_MANY],
-//     ["CONTACT","EMAIL",Cardinality.ONE_TO_MANY_ZERO],
-//     ["CONTACT","CO_WORKER",Cardinality.SUPER_TO_SUBTYPE],
-//     ["CONTACT","VENDOR",Cardinality.SUPER_TO_SUBTYPE],
-//     ["CONTACT","PERSONAL",Cardinality.SUPER_TO_SUBTYPE],
-//     ["VENDOR_TYPE","VENDOR",Cardinality.MANY_TO_MANY],
+//     ["COMPANY", "CONTACT", Cardinality.ZERO_TO_MANY_ZERO],
+//     ["COMPANY", "COMPANY", Cardinality.ZERO_TO_MANY_ZERO],
+//     ["CONTACT", "PHONE", Cardinality.MANY_TO_MANY],
+//     ["CONTACT", "EMAIL", Cardinality.ONE_TO_MANY_ZERO],
+//     ["CONTACT", "CO_WORKER", Cardinality.SUPER_TO_SUBTYPE],
+//     ["CONTACT", "VENDOR", Cardinality.SUPER_TO_SUBTYPE],
+//     ["CONTACT", "PERSONAL", Cardinality.SUPER_TO_SUBTYPE],
+//     ["VENDOR_TYPE", "VENDOR", Cardinality.MANY_TO_MANY],
 
-//     ["PERSONAL","RELATIVE",Cardinality.SUPER_TO_SUBTYPE],
-//     ["PERSONAL","FRIEND",Cardinality.SUPER_TO_SUBTYPE],
+//     ["PERSONAL", "RELATIVE", Cardinality.SUPER_TO_SUBTYPE],
+//     ["PERSONAL", "FRIEND", Cardinality.SUPER_TO_SUBTYPE],
 
 
 
@@ -827,6 +991,7 @@ const Connections = [
 //     ["SOLOIST","COMPOSITION_SOLOIST",Cardinality.ONE_TO_MANY_ZERO],
 
 // ]
+
 
 relation_to_sql()
 // transpose(Relations, Connections)

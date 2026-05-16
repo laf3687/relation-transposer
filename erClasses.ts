@@ -218,3 +218,49 @@ export class Connection {
         return this.relation2 || new Relation("____NULL", [])
     }
 }
+// 5/16/25 adding a queue datastructure 
+export class Queue<T> {
+    private queueData: T[];
+    private frontIndex;
+    private backIndex;
+    reset() {
+        this.queueData = []; this.frontIndex = 0; this.backIndex = 0
+    }
+    constructor() {
+        this.queueData = []
+        this.frontIndex = 0
+        this.backIndex = 0
+    }
+
+    emptyCheck() {
+        if (this.isEmpty()) {
+            throw new Error("Empty Queue.")
+        }
+    }
+
+    enqueue(item: T): void {
+        this.queueData.push(item)
+        this.backIndex++
+    }
+    dequeue(): T {
+        this.emptyCheck()
+        const item = this.peek()
+        this.queueData[this.frontIndex] = (null) as T // garbage collection?
+        this.frontIndex++
+        if (this.isEmpty()) {
+            this.reset()
+        }
+        return item;
+
+    }
+    peek(): T {
+        this.emptyCheck()
+        return this.queueData[this.frontIndex]
+    }
+    isEmpty(): boolean {
+        return this.size() == 0
+    }
+    size(): number {
+        return this.backIndex - this.frontIndex
+    }
+}
