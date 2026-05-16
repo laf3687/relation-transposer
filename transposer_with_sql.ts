@@ -59,6 +59,9 @@ function setSubtypeRelationConnection(supertype: Relation, subtype: Relation, co
         } else {
             console.log(`${key.name} in ${supertype.name} has no datatype.`)
         }
+        if (key.recursiveAttributeName) {
+            subTypeKeyAttribute.setRecursiveName(key.recursiveAttributeName)
+        }
         subtype.addAttribute(subTypeKeyAttribute) // transfers the PKS over and makes them FKS as well.
         subtype.addMustExistInConnection(supertype, key.name) // creates MEI connection
     })
@@ -80,8 +83,8 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
         let keyName = key.name
         let pkBoolean = false
 
-
-        if (relation2.getAttribute(keyName)) {
+        // 5/15/26 recursion thing and added the && check
+        if (relation2.getAttribute(keyName) && !recursive) {
             if (allowRecursiveDistinctRelationBeta) {
                 keyName = keyName + "_" + relation1.name.toLowerCase()
             } else {
@@ -93,7 +96,13 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
             pkBoolean = true
         }
         if (recursive) {
-            keyName = relation1.name.toLowerCase() + "_" + keyName
+            // 5/14/26 new addition for custom recursive attribute names
+            if (key.recursiveAttributeName) {
+                keyName = key.recursiveAttributeName
+            } else {
+                // console.log(colorString("this",255,255,255))
+                keyName = relation1.name.toLowerCase() + "_" + keyName
+            }
             pkBoolean = false
         }
         if (!isIdentifying) {
@@ -103,7 +112,7 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
         if (relation1.isSubType() && !recursive) { // NEW ADDITION FOR SUBTYPE STUFF
             keyName = relation1.name.toLowerCase() + "_" + keyName
             pkBoolean = false
-            if (!relation2.isSubType()) {
+            if (!relation2.isSubType() && relation2.weak) {
                 pkBoolean = true
             }
         }
@@ -165,6 +174,8 @@ function buildRelations(relations: any): Map<String, Relation> {
     for (let i in relations) {
         let newRelation = new Relation(i, [])
         let attributes = relations[i]["attributes"]
+        // let recursiveAttributes = relations[i]["recursive"]
+
         for (let a in attributes) {
             let identifierBoolean = attributes[a]
             let newAttribute = new Attribute(a, identifierBoolean, false)
@@ -175,6 +186,19 @@ function buildRelations(relations: any): Map<String, Relation> {
             }
             newRelation.addAttribute(newAttribute)
         }
+
+        if (relations[i]["recursive"]) {
+            let recursiveAttributes = relations[i]["recursive"]
+            for (let rA in recursiveAttributes) {
+                if (newRelation.getAttribute(rA)) {
+                    // this sets the relation custom name
+                    newRelation.getAttribute(rA)?.setRecursiveName(recursiveAttributes[rA])
+                } else {
+                    throw new Error(`${rA} is not mapped to a valid attribute in the relation`)
+                }
+            }
+        }
+
         if (relations[i]["weak"]) {
             newRelation.weak = true;
         }
@@ -348,235 +372,238 @@ function relation_to_sql() {
     })
 }
 
-// const Relations: {} = {
-//     user: {
-//         attributes: {
-//             user_id: true,
-//             username: false,
-//             first_name: false,
-//             middle_name: false,
-//             last_name: false,
-//             email: false,
-//             phone_num: false,
-//             birth_date: false,
-//             pronouns: false,
-//             nickname: false,
-//             hometown: false,
-//             homepage_link: false,
-//             profile_picture_link: false,
-//             student_or_staff: false,
-//         },
-//         datatypes: {
-//             user_id: "INT UNSIGNED AUTO_INCREMENT",
-//             username: "VARCHAR(50) UNIQUE NOT NULL",
-//             first_name: "VARCHAR(50)",
-//             middle_name: "VARCHAR(50)",
-//             last_name: "VARCHAR(50)",
-//             email: "VARCHAR(255) NOT NULL",
-//             phone_num: "VARCHAR(50)",
-//             birth_date: "DATE",
-//             pronouns: "VARCHAR(50)",
-//             nickname: "VARCHAR(50)",
-//             hometown: "VARCHAR(50)",
-//             homepage_link: "VARCHAR(255)",
-//             profile_picture_link: "VARCHAR(255)",
-//             student_or_staff: "ENUM('student','teacher') NOT NULL",
-//         }
-//     },
+const Relations: {} = {
+    user: {
+        attributes: {
+            user_id: true,
+            username: false,
+            first_name: false,
+            middle_name: false,
+            last_name: false,
+            email: false,
+            phone_num: false,
+            birth_date: false,
+            pronouns: false,
+            nickname: false,
+            hometown: false,
+            homepage_link: false,
+            profile_picture_link: false,
+            student_or_staff: false,
+        },
+        datatypes: {
+            user_id: "INT UNSIGNED AUTO_INCREMENT",
+            username: "VARCHAR(50) UNIQUE NOT NULL",
+            first_name: "VARCHAR(50)",
+            middle_name: "VARCHAR(50)",
+            last_name: "VARCHAR(50)",
+            email: "VARCHAR(255) NOT NULL",
+            phone_num: "VARCHAR(50)",
+            birth_date: "DATE",
+            pronouns: "VARCHAR(50)",
+            nickname: "VARCHAR(50)",
+            hometown: "VARCHAR(50)",
+            homepage_link: "VARCHAR(255)",
+            profile_picture_link: "VARCHAR(255)",
+            student_or_staff: "ENUM('student','teacher') NOT NULL",
+        }
+    },
 
-//     student: {
-//         attributes: {
+    student: {
+        attributes: {
 
-//         }
-//     },
+        }
+    },
 
-//     staff: {
-//         attributes: {
-//             teacher_or_teacher_assistant: false 
-//         },
-//         datatypes: {
-//             teacher_or_teacher_assistant: "ENUM('teacher','teacher_assistant') NOT NULL"
-//         }
-//     },
+    staff: {
+        attributes: {
+            teacher_or_teacher_assistant: false 
+        },
+        datatypes: {
+            teacher_or_teacher_assistant: "ENUM('teacher','teacher_assistant') NOT NULL"
+        }
+    },
 
-//     teacher: {
-//         attributes: {
+    teacher: {
+        attributes: {
 
-//         }
-//     },
+        }
+    },
 
-//     teacher_assistant: { 
-//         attributes: {
+    teacher_assistant: { 
+        attributes: {
 
-//         }
-//     },
+        }
+    },
 
-//     login_info: {
-//         attributes: {
-//             hashed_password:false
-//         },
-//         datatypes: {
-//             hashed_password:"VARCHAR(255)"
-//         },
-//         weak:true
-//     },
+    login_info: {
+        attributes: {
+            hashed_password:false
+        },
+        datatypes: {
+            hashed_password:"VARCHAR(255)"
+        },
+        weak:true
+    },
 
-//     course: {
-//         attributes: {
-//             course_section: true,
-//             course_year: true,
-//             course_name: false,
-//             course_description: false,
-//         },
-//         datatypes: {
-//             course_section: "INT UNSIGNED",
-//             course_year: "YEAR",
-//             course_name: "VARCHAR(50)",
-//             course_description: "VARCHAR(255)",
-//         }
-//     },
-//     announcements: {
-//         attributes: {
-//             datetime_posted: false,
-//             announcement: false
-//         },
-//         datatypes:{
-//             datetime_posted: "DATETIME",
-//             announcement: "VARCHAR(2000)"
-//         },
-//         weak: true,
-//     },
-//     gradable: {
-//         attributes: {
-//             gradable_id: true,
-//             points: false,
-//             weight: false,
-//             start_date: false,
-//             due_date: false,
-//             gradable_type: false,
-//         },
-//         datatypes: {
-//             gradable_id: "INT UNSIGNED AUTO_INCREMENT",
-//             points: "INT",
-//             weight: "DECIMAL(5,2)",
-//             start_date: "DATETIME",
-//             due_date: "DATETIME",
-//             gradable_type: "ENUM('quiz','discussion_forum','assignment')",
-//         }
-//     },
+    course: {
+        attributes: {
+            course_section: true,
+            course_year: true,
+            course_name: false,
+            course_description: false,
+        },
+        datatypes: {
+            course_section: "INT UNSIGNED",
+            course_year: "YEAR",
+            course_name: "VARCHAR(50)",
+            course_description: "VARCHAR(255)",
+        }
+    },
+    announcements: {
+        attributes: {
+            datetime_posted: false,
+            announcement: false
+        },
+        datatypes:{
+            datetime_posted: "DATETIME",
+            announcement: "VARCHAR(2000)"
+        },
+        weak: true,
+    },
+    gradable: {
+        attributes: {
+            gradable_id: true,
+            points: false,
+            weight: false,
+            start_date: false,
+            due_date: false,
+            gradable_type: false,
+        },
+        datatypes: {
+            gradable_id: "INT UNSIGNED AUTO_INCREMENT",
+            points: "INT",
+            weight: "DECIMAL(5,2)",
+            start_date: "DATETIME",
+            due_date: "DATETIME",
+            gradable_type: "ENUM('quiz','discussion_forum','assignment')",
+        }
+    },
 
-//     student_gradable:{ 
-//         attributes: {
-//             grade_received:false,
-//             comment:false,
-//         },
-//         weak:true,
-//         datatypes: {
-//             grade_received:"INT",
-//             comment:"VARCHAR(2000)",
-//         }
-//     },
-
-
-//     assignment: {
-//         attributes: {
-//             assignment_details: false
-//         },
-//         datatypes: {
-//             assignment_details: "VARCHAR(500)"
-//         }
-//     },
-//     discussion_forum: {
-//         attributes: {
-//             discussion_details: false,
-//         },
-//         datatypes: {
-//             discussion_details: "VARCHAR(500)"
-//         }
-//         // weak: true,
-//     },
-//     discussion_post: {
-//         attributes: {
-//             post_id: true,
-//             message: false
-//             // reply_id
-//         },
-//         datatypes: {
-//             post_id: "INT UNSIGNED AUTO_INCREMENT",
-//             message: "VARCHAR(2000)"
-//         }
-//     },
-//     quiz: {
-//         attributes: {
-
-//         },
-//         weak: true,
-//     },
-//     quiz_question: {
-//         attributes: {
-//             question_number: true,
-//             question: false,
-//         },
-//         datatypes: {
-//             question_number: "INT UNSIGNED AUTO_INCREMENT",
-//             question: "VARCHAR(500)"
-//         },
-//         weak: true
-//     },
-
-//     question_answer: {
-//         attributes: {
-//             answer:false,
-//             answer_type: false
-//         },
-//         datatypes:{
-//             answer:"VARCHAR(500)",
-//             answer_type:"ENUM ('free_response','multiple_choice')"
-//         },
-//         weak: true,
-//     },
+    student_gradable:{ 
+        attributes: {
+            grade_received:false,
+            comment:false,
+        },
+        weak:true,
+        datatypes: {
+            grade_received:"INT",
+            comment:"VARCHAR(2000)",
+        }
+    },
 
 
-//     free_response: {
-//         attributes: {
-//             // answer: false
-//         }
-//     },
-//     multiple_choice: {
-//         attributes: {
-//             is_answer: false
-//         },
-//         datatypes: {
-//             is_answer: "TINYINT(1)"
-//         }
-//     }
-// }
+    assignment: {
+        attributes: {
+            assignment_details: false
+        },
+        datatypes: {
+            assignment_details: "VARCHAR(500)"
+        }
+    },
+    discussion_forum: {
+        attributes: {
+            discussion_details: false,
+        },
+        datatypes: {
+            discussion_details: "VARCHAR(500)"
+        }
+        // weak: true,
+    },
+    discussion_post: {
+        attributes: {
+            post_id: true,
+            message: false
+            // reply_id
+        },
+        datatypes: {
+            post_id: "INT UNSIGNED AUTO_INCREMENT",
+            message: "VARCHAR(2000)"
+        },
+        recursive: {
+            post_id: "reply_id"
+        }
+    },
+    quiz: {
+        attributes: {
 
-// const Connections = [
-//     ["user", "course", Cardinality.MANY_TO_MANY],
+        },
+        weak: true,
+    },
+    quiz_question: {
+        attributes: {
+            question_number: true,
+            question: false,
+        },
+        datatypes: {
+            question_number: "INT UNSIGNED AUTO_INCREMENT",
+            question: "VARCHAR(500)"
+        },
+        weak: true
+    },
 
-//     ["user","login_info",Cardinality.ONE_TO_MANY_ONE],
-//     ["course", "gradable", Cardinality.ONE_TO_MANY_ZERO],
-//     ["course", "announcements", Cardinality.ONE_TO_MANY_ZERO],
-//     ["gradable", "quiz", Cardinality.SUPER_TO_SUBTYPE],
-//     ["gradable", "discussion_forum", Cardinality.SUPER_TO_SUBTYPE],
-//     ["gradable", "assignment", Cardinality.SUPER_TO_SUBTYPE],
-//     ["discussion_forum", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
-//     ["discussion_post", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
-//     ["quiz", "quiz_question", Cardinality.ONE_TO_MANY_ONE],
-//     ["quiz_question", "question_answer", Cardinality.ONE_TO_MANY_ONE],
-//     ["question_answer", "free_response", Cardinality.SUPER_TO_SUBTYPE],
-//     ["question_answer", "multiple_choice", Cardinality.SUPER_TO_SUBTYPE],
+    question_answer: {
+        attributes: {
+            answer:false,
+            answer_type: false
+        },
+        datatypes:{
+            answer:"VARCHAR(500)",
+            answer_type:"ENUM ('free_response','multiple_choice')"
+        },
+        weak: true,
+    },
 
-//     ["user","student",Cardinality.SUPER_TO_SUBTYPE],
-//     ["user","staff",Cardinality.SUPER_TO_SUBTYPE],
-//     ["staff","teacher",Cardinality.SUPER_TO_SUBTYPE],
-//     ["staff","teacher_assistant",Cardinality.SUPER_TO_SUBTYPE],
 
-//     ["student","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
-//     ["gradable","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
+    free_response: {
+        attributes: {
+            // answer: false
+        }
+    },
+    multiple_choice: {
+        attributes: {
+            is_answer: false
+        },
+        datatypes: {
+            is_answer: "TINYINT(1)"
+        }
+    }
+}
 
-// ]
+const Connections = [
+    ["user", "course", Cardinality.MANY_TO_MANY],
+
+    ["user","login_info",Cardinality.ONE_TO_MANY_ONE],
+    ["course", "gradable", Cardinality.ONE_TO_MANY_ZERO],
+    ["course", "announcements", Cardinality.ONE_TO_MANY_ZERO],
+    ["gradable", "quiz", Cardinality.SUPER_TO_SUBTYPE],
+    ["gradable", "discussion_forum", Cardinality.SUPER_TO_SUBTYPE],
+    ["gradable", "assignment", Cardinality.SUPER_TO_SUBTYPE],
+    ["discussion_forum", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
+    ["discussion_post", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
+    ["quiz", "quiz_question", Cardinality.ONE_TO_MANY_ONE],
+    ["quiz_question", "question_answer", Cardinality.ONE_TO_MANY_ONE],
+    ["question_answer", "free_response", Cardinality.SUPER_TO_SUBTYPE],
+    ["question_answer", "multiple_choice", Cardinality.SUPER_TO_SUBTYPE],
+
+    ["user","student",Cardinality.SUPER_TO_SUBTYPE],
+    ["user","staff",Cardinality.SUPER_TO_SUBTYPE],
+    ["staff","teacher",Cardinality.SUPER_TO_SUBTYPE],
+    ["staff","teacher_assistant",Cardinality.SUPER_TO_SUBTYPE],
+
+    ["student","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
+    ["gradable","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
+
+]
 
 
 // const Relations: {} = {
@@ -604,34 +631,111 @@ function relation_to_sql() {
 //     ["FRIEND","USER",Cardinality.ONE_TO_MANY_ZERO],
 // ]
 
-const Relations: {} = {
-    A: {
-        attributes: {
-            a: true,
-            b: false,
-        }
-    },
-    B: {
-        attributes: {
-            c: true,
-            bruh: true,
-            d: false
-        },
-        weak: false
-    },
-    C: {
-        attributes: {
-            e: false,
-            f: false
-        },
-        weak: true
-    }
-}
+// const Relations: {} = {
+//     A: {
+//         attributes: {
+//             a: true,
+//             b: false,
+//         }
+//     },
+//     B: {
+//         attributes: {
+//             c: true,
+//             bruh: true,
+//             d: false
+//         },
+//         weak: false
+//     },
+//     C: {
+//         attributes: {
+//             e: false,
+//             f: false
+//         },
+//         weak: true
+//     }
+// }
 
-const Connections = [
-    ["A", "B", Cardinality.ONE_TO_ZERO],
-    ["A", "C", Cardinality.ONE_TO_ZERO],
-    ["B", "C", Cardinality.ONE_TO_ZERO]
-]
+// const Connections = [
+//     ["A", "B", Cardinality.ONE_TO_ZERO],
+//     ["A", "C", Cardinality.ONE_TO_ZERO],
+//     ["B", "C", Cardinality.ONE_TO_ZERO]
+// ]
+
+
+// const Relations: {} = {
+//     gradable: {
+//         attributes: {
+//             gradable_id: true,
+//             points: false,
+//             weight: false,
+//             start_date: false,
+//             due_date: false,
+//             gradable_type: false,
+//         },
+//         datatypes: {
+//             gradable_id: "INT UNSIGNED AUTO_INCREMENT",
+//             points: "INT",
+//             weight: "DECIMAL(5,2)",
+//             start_date: "DATETIME",
+//             due_date: "DATETIME",
+//             gradable_type: "ENUM('quiz','discussion_forum','assignment')",
+//         }
+//     },
+//     discussion_forum: {
+//         attributes: {
+//             discussion_details: false,
+//         },
+//         datatypes: {
+//             discussion_details: "VARCHAR(500)"
+//         }
+//     },
+//     discussion_post: {
+//         attributes: {
+//             post_id: true,
+//             message: false
+//             // reply_id
+//         },
+//         datatypes: {
+//             post_id: "INT UNSIGNED AUTO_INCREMENT",
+//             message: "VARCHAR(2000)"
+//         },
+//         recursive: {
+//             post_id: "reply_id"
+//         }
+//     },
+// }
+
+
+// const Connections = [
+//     ["gradable", "discussion_forum", Cardinality.SUPER_TO_SUBTYPE],
+//     ["discussion_forum", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
+//     ["discussion_post", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
+
+// ]
+
+// const Relations: {} = {
+//     EMPLOYEE: {
+//         attributes: {
+//             id: true,
+//             // email: true,
+//             fname: false,
+//             lname: false,
+//             p_num: false,
+//         },
+//         datatypes: {
+//             id: "INT UNSIGNED AUTO_INCREMENT",
+//             fname: "VARCHAR(50)",
+//             lname: "VARCHAR(50)",
+//             p_num: "CHAR(11)",
+//         },
+//         recursive: {
+//             id: "mentor_id"
+//         }
+//     }
+// }
+
+// const Connections = [
+//     ["EMPLOYEE","EMPLOYEE",Cardinality.ONE_TO_MANY_ONE]
+// ]
 
 relation_to_sql()

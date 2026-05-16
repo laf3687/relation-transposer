@@ -17,7 +17,8 @@ export class Attribute {
     public foreignKey;
     public datatype?: string;
     public foriegnKeyNotNULL = false;
-    // mustExistIn;
+    // 5/15/26 new addition for custom set recursive attribute names
+    public recursiveAttributeName?: string;
     constructor(name: string, identifierBoolean: boolean, foreignKeyBoolean: boolean) {
         this.name = name
         this.identifier = identifierBoolean
@@ -42,6 +43,10 @@ export class Attribute {
 
     setDatatype(dt: string) {
         this.datatype = dt
+    }
+
+    setRecursiveName(attributeName: string) {
+        this.recursiveAttributeName = attributeName
     }
 
     toString() {
