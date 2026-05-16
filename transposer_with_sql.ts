@@ -111,8 +111,11 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
         if (relation1.isSubType() && !recursive) { // NEW ADDITION FOR SUBTYPE STUFF
             keyName = relation1.name.toLowerCase() + "_" + keyName
             // 5/16/25 i commented this pk boolean thing out because it was breaking MtM connections w/ subtypes
-            // pkBoolean = false
-            if (!relation2.isSubType() && relation2.weak) {
+            // 5/16/25 LATER: revert
+            pkBoolean = false
+            // 5/16/25 associative entity check???
+            if (!relation2.isSubType() && relation2.weak && relation2.isAssociativeEntity) {
+                // console.log(colorString(`triggered by ${relation1.name} -> ${relation2.name}`,0,255,0))
                 pkBoolean = true
             }
         }
@@ -133,7 +136,8 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
             }
         }
 
-        if (relation2.weak === true) { // new code to handle set weak entities
+        if (relation2.weak === true && !relation1.isSubType()) { // new code to handle set weak entities || 5/16/25 edited so that subtype relationships cannot make PKS.
+            // console.log(colorString(`triggered by ${relation1.name} -> ${relation2.name}`,255,0,0))
             pkBoolean = true
         }
 
@@ -175,9 +179,13 @@ function buildRelations(relations: any): Map<String, Relation> {
         let newRelation = new Relation(i, [])
         let attributes = relations[i]["attributes"]
         // let recursiveAttributes = relations[i]["recursive"]
-
+        // 5/16/26 amt of PKS for associative entity tracking
+        let primaryKeys = 0
         for (let a in attributes) {
             let identifierBoolean = attributes[a]
+            if (identifierBoolean == true) {
+                primaryKeys ++;
+            }
             let newAttribute = new Attribute(a, identifierBoolean, false)
             if (relations[i]["datatypes"]) { // new code to handle explicit data types
                 if (relations[i]["datatypes"][a]) {
@@ -201,6 +209,10 @@ function buildRelations(relations: any): Map<String, Relation> {
 
         if (relations[i]["weak"]) {
             newRelation.weak = true;
+            if (primaryKeys == 0) {
+                console.log(colorString(`${newRelation.name} is an ASSOCIATIVE entity`,0,0,255))
+                newRelation.isAssociativeEntity = true
+            }
         }
         rls.set(i, newRelation)
     }
@@ -632,31 +644,186 @@ function relation_to_sql() {
 // ]
 
 
+// const Relations: {} = {
+//     PERSON: {
+//         attributes: {
+//             person_id: true,
+//             fname: false,
+//             lname: false
+//         }
+//     },
+//     STUDENT: {
+//         attributes: {
+//             student_nickname: false
+//         }
+//     },
+//     COURSE: {
+//         attributes: {
+//             course_id: true,
+//             course_name: false
+//         }
+//     }
+// }
+
+// const Connections = [
+//     ["PERSON","STUDENT",Cardinality.SUPER_TO_SUBTYPE],
+//     ["STUDENT","COURSE",Cardinality.MANY_TO_MANY]
+// ]
+
+// const Relations: {} = {
+//     COMPANY: {
+//         attributes: {
+//             company_name: true,
+//             company_url: false,
+//             company_phone: false,
+//         },
+//         recursive: {
+//             company_name: "parent_company_name"
+//         }
+//     },
+//     PHONE: {
+//         attributes: {
+//             phone_number:true,
+//             phone_type_desc:false,
+//         }
+//     },
+//     CONTACT: {
+//         attributes: {
+//             contact_id: true,
+//             fname: false,
+//             mi: false,
+//             lname: false,
+//         }
+//     },
+//     EMAIL: {
+//         attributes: {
+//             email: true
+//         }
+//     },
+//     CO_WORKER: {
+//         attributes: {
+//             office_number: false
+//         }
+//     },
+//     VENDOR_TYPE: {
+//         attributes: {
+//             vendor_type_id: true,
+//             description: false
+//         }
+//     },
+//     VENDOR: {
+//         attributes: {
+
+//         }
+//     },
+//     PERSONAL: {
+//         attributes: {
+//             street: false,
+//             city: false,
+//             state: false,
+//             zip_code: false,
+//         }
+//     },
+//     RELATIVE: {
+//         attributes: {
+//             relationship: false,
+//             friend: false,
+//         }
+//     },
+//     FRIEND: {
+//         attributes: {
+//             know_from: false
+//         }
+//     },
+// }
+
+// const Connections = [
+//     ["COMPANY","CONTACT",Cardinality.ZERO_TO_MANY_ZERO],
+//     ["COMPANY","COMPANY",Cardinality.ZERO_TO_MANY_ZERO],
+//     ["CONTACT","PHONE",Cardinality.MANY_TO_MANY],
+//     ["CONTACT","EMAIL",Cardinality.ONE_TO_MANY_ZERO],
+//     ["CONTACT","CO_WORKER",Cardinality.SUPER_TO_SUBTYPE],
+//     ["CONTACT","VENDOR",Cardinality.SUPER_TO_SUBTYPE],
+//     ["CONTACT","PERSONAL",Cardinality.SUPER_TO_SUBTYPE],
+//     ["VENDOR_TYPE","VENDOR",Cardinality.MANY_TO_MANY],
+
+//     ["PERSONAL","RELATIVE",Cardinality.SUPER_TO_SUBTYPE],
+//     ["PERSONAL","FRIEND",Cardinality.SUPER_TO_SUBTYPE],
+
+
+
+// ]
+
 const Relations: {} = {
-    PERSON: {
+    MEMBER: {
         attributes: {
-            person_id: true,
-            fname: false,
-            lname: false
+            member_id:true,
         }
     },
-    STUDENT: {
+    MUSICIAN: {
         attributes: {
-            student_nickname: false
+            
         }
     },
-    COURSE: {
+    CONDUCTOR: {
         attributes: {
-            course_id: true,
-            course_name: false
+            
         }
+    },
+    SENIOR: {
+        attributes:{
+
+        }
+    },
+    JUNIOR: {
+        attributes:{
+
+        }
+    },
+    SOLOIST: {
+        attributes:{
+
+        }
+    },
+    CONCERT_SEASON: {
+        attributes: {
+            season_year:true
+        }
+    },
+    CONCERT: {
+        attributes: {
+            concert_number:true
+        },
+        weak:true
+    },
+    COMPOSITION: {
+        attributes: {
+            composer_name:true,
+            composition_name:true
+        }
+    },
+    COMPOSITION_SOLOIST: {
+        attributes: {
+
+        },
+        weak:true
     }
 }
 
 const Connections = [
-    ["PERSON","STUDENT",Cardinality.SUPER_TO_SUBTYPE],
-    ["STUDENT","COURSE",Cardinality.MANY_TO_MANY]
+    ["MEMBER","CONDUCTOR",Cardinality.SUPER_TO_SUBTYPE],
+    ["MEMBER","MUSICIAN",Cardinality.SUPER_TO_SUBTYPE],
+    ["CONDUCTOR","JUNIOR",Cardinality.SUPER_TO_SUBTYPE],
+    ["CONDUCTOR","SENIOR",Cardinality.SUPER_TO_SUBTYPE],
+    ["MUSICIAN","SOLOIST",Cardinality.SUPER_TO_SUBTYPE],
+    ["SENIOR","JUNIOR",Cardinality.ONE_TO_ZERO],
+    ["CONCERT_SEASON","CONCERT",Cardinality.ONE_TO_MANY_ONE],
+    ["CONDUCTOR","CONCERT",Cardinality.ONE_TO_MANY_ZERO],
+    ["CONCERT","COMPOSITION",Cardinality.MANY_TO_MANY],
+    ["COMPOSITION","COMPOSITION_SOLOIST",Cardinality.ONE_TO_MANY_ZERO],
+    ["SOLOIST","COMPOSITION_SOLOIST",Cardinality.ONE_TO_MANY_ZERO],
+    
 ]
 
 // relation_to_sql()
-transpose(Relations,Connections)
+transpose(Relations, Connections)

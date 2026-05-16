@@ -67,20 +67,24 @@ export class Relation {
     public name;
     private attributes = new Map<string, Attribute>();
     public mustExistIn: MustExistInConnection[] = []
+    public weak: boolean = false;
+    public isAssociativeEntity: boolean = false;
 
     private subTypeData = {
         "isSubType": false,
         "inheritedFrom": new Object
     }
 
-    public weak: boolean;
 
     constructor(name: String, attributesIterable: Attribute[]) {
         this.name = name;
         attributesIterable.forEach(element => {
             this.attributes.set(element.name, element)
         });
-        this.weak = false;
+        // this.weak = false;
+        // if (this.getPrimaryKeys().size == 0) {
+        //     this.isAssociativeEntity = true
+        // }
     }
     addMustExistInConnection(relationObject: Relation, identifierName: string, recursiveKey: string = "null") {
         let mei = new MustExistInConnection(relationObject, identifierName)
