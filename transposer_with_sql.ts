@@ -88,7 +88,10 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
         // 5/15/26 recursion thing and added the && check
         if (relation2.getAttribute(keyName) && !recursive) {
             if (allowRecursiveDistinctRelationBeta) {
-                keyName = keyName + "_" + relation1.name.toLowerCase()
+                // 5/17/26 added this check here due to weird subtyping stuff
+                if (!relation1.getAttribute(keyName)) {
+                    keyName = keyName + "_" + relation1.name.toLowerCase()
+                }
             } else {
                 throw new Error("Error. Major error happened, or Recursive Relationships with Distinct Relations is not enabled.")
             }
@@ -990,91 +993,163 @@ function relation_to_sql() {
 //     ["OWNER","PROPERTY_OWNER",Cardinality.ONE_TO_MANY_ONE],
 // ]
 
+// const Relations: {} = {
+
+//     MEMBER: {
+//         attributes: {
+//             member_number: true,
+//         },
+//         recursive: {
+//             member_number: "referrer_member_number"
+//         }
+//     },
+//     MEMBER_LOAN: {
+//         attributes: {
+//             closing_rate: false,
+//         },
+//         weak:true
+//     },
+//     MEMBER_ACCOUNT: {
+//         attributes: {
+//             current_balance: false
+//         },
+//         weak: true
+//     },
+//     TRANSACTION: {
+//         attributes: {
+//             time_stamp: true,
+//         },
+//         weak: true
+//     },
+//     TRANS_TYPE: {
+//         attributes: {
+//             type_id: true
+//         },
+//     },
+//     ACCOUNT_TYPE: {
+//         attributes: {
+//             account_type_id: true,
+//         }
+//     },
+//     LOAN_TYPE: {
+//         attributes: {
+//             loan_code: true
+//         }
+//     },
+//     VEHICLE: {
+//         attributes: {
+
+//         }
+//     },
+//     PERSONAL: {
+//         attributes: {
+
+//         }
+//     },
+//     MORTGAGE: {
+//         attributes: {
+
+//         }
+//     },
+//     FIXED_RATE: {
+//         attributes: {
+
+//         }
+//     },
+//     ADJUSTABLE: {
+//         attributes: {
+
+//         }
+//     },
+
+// }
+
+// const Connections: any[] = [
+//     ["MEMBER", "MEMBER", Cardinality.ZERO_TO_MANY_ZERO_NID],
+//     ["MEMBER", "MEMBER_LOAN", Cardinality.ONE_TO_MANY_ZERO],
+//     ["LOAN_TYPE", "MEMBER_LOAN", Cardinality.ONE_TO_MANY_ZERO],
+//     ["LOAN_TYPE", "VEHICLE", Cardinality.SUPER_TO_SUBTYPE],
+//     ["LOAN_TYPE", "PERSONAL", Cardinality.SUPER_TO_SUBTYPE],
+//     ["LOAN_TYPE", "MORTGAGE", Cardinality.SUPER_TO_SUBTYPE],
+//     ["MORTGAGE", "FIXED_RATE", Cardinality.SUPER_TO_SUBTYPE],
+//     ["MORTGAGE", "ADJUSTABLE", Cardinality.SUPER_TO_SUBTYPE],
+//     ["MEMBER", "MEMBER_ACCOUNT", Cardinality.ONE_TO_MANY_ONE],
+//     ["ACCOUNT_TYPE", "MEMBER_ACCOUNT", Cardinality.ONE_TO_MANY_ZERO],
+//     ["MEMBER_ACCOUNT", "TRANSACTION", Cardinality.ONE_TO_MANY_ZERO],
+//     ["TRANS_TYPE", "TRANSACTION", Cardinality.ONE_TO_MANY_ZERO_NID],
+// ]
+
+
+
+
 const Relations: {} = {
-
-    MEMBER: {
+    PERSON: {
         attributes: {
-            member_number: true,
-        },
-        recursive: {
-            member_number: "referrer_member_number"
+            ssn: true,
+            name: false
         }
     },
-    MEMBER_LOAN: {
+    STAFF: {
         attributes: {
-            closing_rate: false,
+            // ssn: true
         },
-        weak:true
+        // recursive: {
+        //     ssn: "manager_ssn"
+        // }
     },
-    MEMBER_ACCOUNT: {
+    PATIENT: {
         attributes: {
-            current_balance: false
+
+        }
+    },
+    SUPPORT_STAFF: {
+        attributes: {
+            wage: false,
+        }
+    },
+    NURSE: {
+        attributes: {
+            certification: false
+        }
+    },
+    DOCTOR: {
+        attributes: {
+
+        }
+    },
+    DEPARTMENT: {
+        attributes: {
+            dept_number: true,
+            name: false
+        }
+    },
+    INSURANCE_COMPANY: {
+        attributes: {
+            co_number: true,
+            name: false,
+        }
+    },
+    INSURANCE_POLICY: {
+        attributes: {
+            policy_num: false,
         },
         weak: true
-    },
-    TRANSACTION: {
-        attributes: {
-            time_stamp: true,
-        },
-        weak: true
-    },
-    TRANS_TYPE: {
-        attributes: {
-            type_id: true
-        },
-    },
-    ACCOUNT_TYPE: {
-        attributes: {
-            account_type_id: true,
-        }
-    },
-    LOAN_TYPE: {
-        attributes: {
-            loan_code: true
-        }
-    },
-    VEHICLE: {
-        attributes: {
-
-        }
-    },
-    PERSONAL: {
-        attributes: {
-
-        }
-    },
-    MORTGAGE: {
-        attributes: {
-
-        }
-    },
-    FIXED_RATE: {
-        attributes: {
-
-        }
-    },
-    ADJUSTABLE: {
-        attributes: {
-
-        }
-    },
-
+    }
 }
-// relation_to_sql()
 
-const Connections: any[] = [
-    ["MEMBER", "MEMBER", Cardinality.ZERO_TO_MANY_ZERO_NID],
-    ["MEMBER", "MEMBER_LOAN", Cardinality.ONE_TO_MANY_ZERO],
-    ["LOAN_TYPE", "MEMBER_LOAN", Cardinality.ONE_TO_MANY_ZERO],
-    ["LOAN_TYPE", "VEHICLE", Cardinality.SUPER_TO_SUBTYPE],
-    ["LOAN_TYPE", "PERSONAL", Cardinality.SUPER_TO_SUBTYPE],
-    ["LOAN_TYPE", "MORTGAGE", Cardinality.SUPER_TO_SUBTYPE],
-    ["MORTGAGE", "FIXED_RATE", Cardinality.SUPER_TO_SUBTYPE],
-    ["MORTGAGE", "ADJUSTABLE", Cardinality.SUPER_TO_SUBTYPE],
-    ["MEMBER", "MEMBER_ACCOUNT", Cardinality.ONE_TO_MANY_ONE],
-    ["ACCOUNT_TYPE", "MEMBER_ACCOUNT", Cardinality.ONE_TO_MANY_ZERO],
-    ["MEMBER_ACCOUNT", "TRANSACTION", Cardinality.ONE_TO_MANY_ZERO],
-    ["TRANS_TYPE", "TRANSACTION", Cardinality.ONE_TO_MANY_ZERO_NID],
+const Connections = [
+    ["PERSON", "STAFF", Cardinality.SUPER_TO_SUBTYPE],
+    ["PERSON", "PATIENT", Cardinality.SUPER_TO_SUBTYPE],
+    ["STAFF", "STAFF", Cardinality.ONE_TO_MANY_ZERO],
+    ["STAFF", "DEPARTMENT", Cardinality.MANY_TO_MANY],
+    ["STAFF", "SUPPORT_STAFF", Cardinality.SUPER_TO_SUBTYPE],
+    ["STAFF", "NURSE", Cardinality.SUPER_TO_SUBTYPE],
+    ["STAFF", "DOCTOR", Cardinality.SUPER_TO_SUBTYPE],
+    ["DOCTOR", "DOCTOR", Cardinality.ONE_TO_MANY_ZERO],
+    ["DOCTOR", "PATIENT", Cardinality.ONE_TO_MANY_ZERO],
+    ["PATIENT", "INSURANCE_POLICY", Cardinality.ONE_TO_MANY_ZERO],
+    ["INSURANCE_COMPANY", "INSURANCE_POLICY", Cardinality.ONE_TO_MANY_ZERO],
 ]
 
-transpose(Relations, Connections)
+// transpose(Relations, Connections)
+relation_to_sql()
