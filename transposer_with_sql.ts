@@ -364,7 +364,8 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
         // this is when an element is prematurely connected to an element on a whole different layer (usually below)
         let layerQueues = new Map<number, Queue<Connection>>()
-        // let layerFinishedConnectionsSet = new Map<number, Set<Relation>>()
+        const superQueueRelations = new Map<number, Set<Relation>>()
+
         for (let i = 0; i <= maxConnections; i++) {
             if (relMapByHitsFlipped.has(i)) {
                 console.log(i)
@@ -377,8 +378,11 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                         relations.set(relationObject.name, relationObject)
                     }
 
-
                     let connectionLayerSet = connectionIndex.get(relationObject)
+                    // used to gauge if it relations should be placed in the hashmap before or after the queue dumps
+                    const expectedAmountOfConnections = connectionLayerSet?.length
+                    let amountOfConnectionsInitialized = 0
+                    
                     connectionLayerSet?.forEach((conn) => {
                         console.log(`${conn.getRelation1().name} -> ${conn.getRelation2().name}`)
                         if (relationLayerSet.has(conn.getRelation1()) && !thisLayerFinishedConnections.has(conn.getRelation1())) {
@@ -386,23 +390,43 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                             thisLayerQueue.enqueue(conn)
                         } else {
                             // 5/17/26 new check for if rel1 is on a deeper level then move it to that queue
-                            let hitsOfRelation1 = relMapByHits.get(conn.getRelation1())
+                            let relation1 = conn.getRelation1()
+                            let hitsOfRelation1 = relMapByHits.get(relation1)
                             let hitsOfMyRelation = relMapByHits.get(relationObject)
+
                             if (hitsOfRelation1 && hitsOfMyRelation && hitsOfRelation1 > hitsOfMyRelation) {
-                                console.log("placing " + relationObject.name + " in the super queue (layer " + hitsOfRelation1 + ") due to premature connection!")
-                                if (!layerQueues.has(hitsOfRelation1)) {
-                                    layerQueues.set(hitsOfRelation1, new Queue<Connection>())
-                                }
-                                layerQueues.get(hitsOfRelation1)?.enqueue(conn)
-                                // set the new hit meter
+                                console.log("changing priority of " + relationObject.name + " to (layer " + hitsOfRelation1 + ") (1) due to premature connection!")
+                                // 5/19/26 set the new hit meter, and instead of setting a layerqueue just add the relation to the next layer
+                                // if (!layerQueues.has(hitsOfRelation1)) {
+                                //     layerQueues.set(hitsOfRelation1, new Queue<Connection>())
+                                // }
+                                // layerQueues.get(hitsOfRelation1)?.enqueue(conn)
                                 relMapByHits.set(relationObject, hitsOfRelation1)
+                                relMapByHitsFlipped.get(hitsOfRelation1)?.add(relationObject)
                             } else {
-                                connections.push(conn)
-                                thisLayerFinishedConnections.add(relationObject)
+                                // console.log(superQueueRelations.get(i))
+                                if (superQueueRelations.get(i)?.has(relation1)) {
+                                    // console.log('beuhhh')
+                                    console.log("placing " + relationObject.name + " in the super queue (layer " + hitsOfRelation1 + ") (3) due to premature connection!")
+
+                                    if (hitsOfRelation1 && hitsOfMyRelation) {
+                                        if (!layerQueues.has(hitsOfRelation1)) {
+                                            layerQueues.set(hitsOfRelation1, new Queue<Connection>())
+                                        }
+                                        layerQueues.get(hitsOfRelation1)?.enqueue(conn)
+                                    }
+                                } else {
+                                    connections.push(conn)
+                                    // console.log("ADDING " + relationObject.name)
+                                    thisLayerFinishedConnections.add(relationObject)
+                                    amountOfConnectionsInitialized++
+                                }
+
                             }
+
                         }
                     })
-                    if (thisLayerFinishedConnections.has(relationObject)) {
+                    if (thisLayerFinishedConnections.has(relationObject) && amountOfConnectionsInitialized == expectedAmountOfConnections) {
                         relations.set(relationObject.name, relationObject)
                     }
                 })
@@ -410,21 +434,28 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
                 while (!thisLayerQueue.isEmpty()) {
                     let connectionObject = thisLayerQueue.dequeue()
-
-
                     // 5/19/26 new check for items branching off a premature item in a different layer that has not yet been initialized
-                    if (!thisLayerFinishedConnections.has(connectionObject.getRelation1())) {
-                        let hitsOfRelation1 = relMapByHits.get(connectionObject.getRelation1())
-                        console.log("placing " + connectionObject.getRelation2().name + " in the super queue (layer " + hitsOfRelation1 + ") due to premature connection!")
+                    const relation1 = connectionObject.getRelation1()
+                    const relation2 = connectionObject.getRelation2()
+                    if (!thisLayerFinishedConnections.has(relation1)) {
+                        let hitsOfRelation1 = relMapByHits.get(relation1)
+                        console.log("placing " + relation2.name + " in the super queue (layer " + hitsOfRelation1 + ") (2) due to premature connection!")
                         if (hitsOfRelation1) {
                             if (!layerQueues.has(hitsOfRelation1)) {
                                 layerQueues.set(hitsOfRelation1, new Queue<Connection>())
                             }
                             layerQueues.get(hitsOfRelation1)?.enqueue(connectionObject)
+                            relMapByHits.set(relation2, hitsOfRelation1)
+
+                            // 5/19/26 superqueue relations
+                            if (!superQueueRelations.has(hitsOfRelation1)) {
+                                superQueueRelations.set(hitsOfRelation1, new Set<Relation>())
+                            }
+                            superQueueRelations.get(hitsOfRelation1)?.add(relation2)
                         }
                     } else {
                         connections.push(connectionObject)
-                        relations.set(connectionObject.getRelation2().name, connectionObject.getRelation2())
+                        relations.set(relation2.name, relation2)
                     }
 
                 }
@@ -550,7 +581,11 @@ function relation_to_sql() {
 }
 
 const Relations: {} = {
-
+    "&": {
+        attributes: {
+            id: true,
+        },
+    },
     A: {
         attributes: {
             a: true,
@@ -608,6 +643,16 @@ const Relations: {} = {
         attributes: {
             bruh: false
         }
+    },
+    G: {
+        attributes: {
+            zuh: false
+        }
+    },
+    H: {
+        attributes: {
+            zuh: false
+        }
     }
 }
 
@@ -617,7 +662,11 @@ const Connections: any[] = [
     ["D", "C", Cardinality.ONE_TO_MANY_ONE],
     ["A", "miniA", Cardinality.SUPER_TO_SUBTYPE],
     ["C", "E", Cardinality.ONE_TO_MANY_ONE],
-    ["E", "F", Cardinality.SUPER_TO_SUBTYPE]
+    ["E", "F", Cardinality.SUPER_TO_SUBTYPE],
+    ["&", "G", Cardinality.ONE_TO_MANY_ZERO],
+    ["&", "H", Cardinality.ONE_TO_MANY_ZERO],
+    ["F", "G", Cardinality.ONE_TO_MANY_ZERO],
+    ["F", "H", Cardinality.ONE_TO_MANY_ZERO],
 ]
 
 // relation_to_sql();

@@ -263,4 +263,7 @@ export class Queue<T> {
     size(): number {
         return this.backIndex - this.frontIndex
     }
+    returnList(): T[] {
+        return this.queueData
+    }
 }
