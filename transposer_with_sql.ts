@@ -364,7 +364,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
         // this is when an element is prematurely connected to an element on a whole different layer (usually below)
         let layerQueues = new Map<number, Queue<Connection>>()
-
+        // let layerFinishedConnectionsSet = new Map<number, Set<Relation>>()
         for (let i = 0; i <= maxConnections; i++) {
             if (relMapByHitsFlipped.has(i)) {
                 console.log(i)
@@ -380,6 +380,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
                     let connectionLayerSet = connectionIndex.get(relationObject)
                     connectionLayerSet?.forEach((conn) => {
+                        console.log(`${conn.getRelation1().name} -> ${conn.getRelation2().name}`)
                         if (relationLayerSet.has(conn.getRelation1()) && !thisLayerFinishedConnections.has(conn.getRelation1())) {
                             console.log("placing " + relationObject.name + " in queue due to premature connection!")
                             thisLayerQueue.enqueue(conn)
@@ -388,28 +389,44 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                             let hitsOfRelation1 = relMapByHits.get(conn.getRelation1())
                             let hitsOfMyRelation = relMapByHits.get(relationObject)
                             if (hitsOfRelation1 && hitsOfMyRelation && hitsOfRelation1 > hitsOfMyRelation) {
-                                console.log("placing " + relationObject.name + " in the super queue due to premature connection!")
+                                console.log("placing " + relationObject.name + " in the super queue (layer " + hitsOfRelation1 + ") due to premature connection!")
                                 if (!layerQueues.has(hitsOfRelation1)) {
                                     layerQueues.set(hitsOfRelation1, new Queue<Connection>())
                                 }
                                 layerQueues.get(hitsOfRelation1)?.enqueue(conn)
+                                // set the new hit meter
+                                relMapByHits.set(relationObject, hitsOfRelation1)
                             } else {
                                 connections.push(conn)
                                 thisLayerFinishedConnections.add(relationObject)
                             }
                         }
-                        console.log(`${conn.getRelation1().name} -> ${conn.getRelation2().name}`)
                     })
                     if (thisLayerFinishedConnections.has(relationObject)) {
                         relations.set(relationObject.name, relationObject)
                     }
                 })
 
+
                 while (!thisLayerQueue.isEmpty()) {
                     let connectionObject = thisLayerQueue.dequeue()
-                    connections.push(connectionObject)
-                    // please fix this later. rel2 is for the missing object
-                    relations.set(connectionObject.getRelation2().name, connectionObject.getRelation2())
+
+
+                    // 5/19/26 new check for items branching off a premature item in a different layer that has not yet been initialized
+                    if (!thisLayerFinishedConnections.has(connectionObject.getRelation1())) {
+                        let hitsOfRelation1 = relMapByHits.get(connectionObject.getRelation1())
+                        console.log("placing " + connectionObject.getRelation2().name + " in the super queue (layer " + hitsOfRelation1 + ") due to premature connection!")
+                        if (hitsOfRelation1) {
+                            if (!layerQueues.has(hitsOfRelation1)) {
+                                layerQueues.set(hitsOfRelation1, new Queue<Connection>())
+                            }
+                            layerQueues.get(hitsOfRelation1)?.enqueue(connectionObject)
+                        }
+                    } else {
+                        connections.push(connectionObject)
+                        relations.set(connectionObject.getRelation2().name, connectionObject.getRelation2())
+                    }
+
                 }
 
                 // 5/17/26 new check for other queues
@@ -417,10 +434,9 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                     const layerQueue = layerQueues.get(i)
                     while (!layerQueue?.isEmpty()) {
                         let connectionObject = layerQueue?.dequeue()
-                        // ts ignores because it doesnt know its there when its literally there bruh.
+                        // console.log(connectionObject)
                         // @ts-ignore
                         connections.push(connectionObject)
-                        // please fix this later. rel2 is for the missing object
                         // @ts-ignore
                         relations.set(connectionObject.getRelation2().name, connectionObject.getRelation2())
                     }
@@ -440,7 +456,6 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
     connections.forEach(c => {
         if (c.connectionType == "MANY_TO_MANY") {
-            // console.log("MtM INITIATING!!!!!!!!!!!!!11")
             let newRelation = setManyToManyConnection(c.getRelation1(), c.getRelation2(), [])
             relations.set(newRelation.name, newRelation)
         } else {
@@ -453,9 +468,6 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
     })
     return relations;
 }
-
-
-
 
 
 
@@ -591,6 +603,11 @@ const Relations: {} = {
 
         },
         weak: true
+    },
+    F: {
+        attributes: {
+            bruh: false
+        }
     }
 }
 
@@ -599,7 +616,8 @@ const Connections: any[] = [
     ["B", "C", Cardinality.ONE_TO_MANY_ONE],
     ["D", "C", Cardinality.ONE_TO_MANY_ONE],
     ["A", "miniA", Cardinality.SUPER_TO_SUBTYPE],
-    ["C", "E", Cardinality.ONE_TO_MANY_ONE]
+    ["C", "E", Cardinality.ONE_TO_MANY_ONE],
+    ["E", "F", Cardinality.SUPER_TO_SUBTYPE]
 ]
 
 // relation_to_sql();
