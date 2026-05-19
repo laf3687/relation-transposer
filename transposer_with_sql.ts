@@ -14,20 +14,8 @@ function colorString(text: string, r: number, g: number, b: number): string {
 
 // yeah i have no clue why it throws me a weird importation error. ill fix later tho
 const Cardinality = {
-    ZERO_TO_ONE: "ZERO_TO_ONE",
     ONE_TO_ZERO: "ONE_TO_ZERO",
-    ZERO_TO_ONE_NID: "ZERO_TO_ONE_NID",
     ONE_TO_ZERO_NID: "ONE_TO_ZERO_NID",
-
-    MANY_ZERO_TO_ZERO: "MANY_ZERO_TO_ZERO",
-    MANY_ONE_TO_ZERO: "MANY_ONE_TO_ZERO",
-    MANY_ZERO_TO_ONE: "MANY_ZERO_TO_ONE",
-    MANY_ONE_TO_ONE: "MANY_ONE_TO_ONE",
-
-    MANY_ZERO_TO_ZERO_NID: "MANY_ZERO_TO_ZERO_NID",
-    MANY_ONE_TO_ZERO_NID: "MANY_ONE_TO_ZERO_NID",
-    MANY_ZERO_TO_ONE_NID: "MANY_ZERO_TO_ONE_NID",
-    MANY_ONE_TO_ONE_NID: "MANY_ONE_TO_ONE_NID",
 
     ZERO_TO_MANY_ZERO: "ZERO_TO_MANY_ZERO",
     ZERO_TO_MANY_ONE: "ZERO_TO_MANY_ONE",
@@ -248,9 +236,7 @@ function buildConnections(connections: any, relations: Map<String, Relation>): C
 const relationshipConnectionsTable: any = {
     // ----------------------1:1--------------------------
     "ONE_TO_ZERO": { flipped: false, ignFK: false, isID: true, MtM: false, nNN: true },
-    "ZERO_TO_ONE": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: true },
     "ONE_TO_ZERO_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: true },
-    "ZERO_TO_ONE_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: true },
     // ----------------------1:M-------------------------
     "ZERO_TO_MANY_ZERO": { flipped: false, ignFK: false, isID: true, MtM: false, nNN: false },
     "ZERO_TO_MANY_ONE": { flipped: false, ignFK: false, isID: true, MtM: false, nNN: false },
@@ -261,15 +247,6 @@ const relationshipConnectionsTable: any = {
     "ONE_TO_MANY_ZERO_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: true },
     "ONE_TO_MANY_ONE_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: true },
 
-    // ----------------------M:1-------------------------
-    "MANY_ZERO_TO_ZERO": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: false },
-    "MANY_ONE_TO_ZERO": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: false },
-    "MANY_ZERO_TO_ONE": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: true },
-    "MANY_ONE_TO_ONE": { flipped: true, ignFK: false, isID: true, MtM: false, nNN: true },
-    "MANY_ZERO_TO_ZERO_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: false },
-    "MANY_ONE_TO_ZERO_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: false },
-    "MANY_ZERO_TO_ONE_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: true },
-    "MANY_ONE_TO_ONE_NID": { flipped: true, ignFK: false, isID: false, MtM: false, nNN: true },
 
 
 

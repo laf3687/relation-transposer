@@ -1,5 +1,0 @@
-    // ["E", "F", Cardinality.SUPER_TO_SUBTYPE],
-    // ["&", "G", Cardinality.ONE_TO_MANY_ZERO],
-    // ["&", "H", Cardinality.ONE_TO_MANY_ZERO],
-    // ["F", "G", Cardinality.ONE_TO_MANY_ZERO],
-    // ["F", "H", Cardinality.ONE_TO_MANY_ZERO],
