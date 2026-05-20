@@ -362,8 +362,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                     
                     connectionLayerSet?.forEach((conn) => {
                         console.log(`${conn.getRelation1().name} -> ${conn.getRelation2().name}`)
-                        // 5/20/26 added recursion check to this condition
-                        if (relationLayerSet.has(conn.getRelation1()) && !thisLayerFinishedConnections.has(conn.getRelation1()) && (conn.getRelation1() != conn.getRelation2())) {
+                        if (relationLayerSet.has(conn.getRelation1()) && !thisLayerFinishedConnections.has(conn.getRelation1())) {
                             console.log("placing " + relationObject.name + " in queue due to premature connection!")
                             thisLayerQueue.enqueue(conn)
                         } else {
@@ -742,8 +741,8 @@ const Relations: {} = {
     },
 }
 const Connections: any[] = [
-    ["A","B",Cardinality.ONE_TO_MANY_ONE],
     ["B","B",Cardinality.ONE_TO_MANY_ONE],
+    ["A","B",Cardinality.ONE_TO_MANY_ONE],
 ]
 // relation_to_sql();
 transpose(Relations, Connections)
