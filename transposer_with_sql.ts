@@ -357,6 +357,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
                     let connectionLayerSet = connectionIndex.get(relationObject)
                     // used to gauge if it relations should be placed in the hashmap before or after the queue dumps
+                    // const expectedAmountOfConnections = connectionLayerSet?.filter((e) => {return e.getRelation1() != e.getRelation2()}).length
                     const expectedAmountOfConnections = connectionLayerSet?.length
                     let amountOfConnectionsInitialized = 0
                     
@@ -374,10 +375,6 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                             if (hitsOfRelation1 && hitsOfMyRelation && hitsOfRelation1 > hitsOfMyRelation) {
                                 console.log("changing priority of " + relationObject.name + " to (layer " + hitsOfRelation1 + ") (1) due to premature connection!")
                                 // 5/19/26 set the new hit meter, and instead of setting a layerqueue just add the relation to the next layer
-                                // if (!layerQueues.has(hitsOfRelation1)) {
-                                //     layerQueues.set(hitsOfRelation1, new Queue<Connection>())
-                                // }
-                                // layerQueues.get(hitsOfRelation1)?.enqueue(conn)
                                 relMapByHits.set(relationObject, hitsOfRelation1)
                                 relMapByHitsFlipped.get(hitsOfRelation1)?.add(relationObject)
                             } else {
@@ -404,6 +401,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                         }
                     })
                     if (thisLayerFinishedConnections.has(relationObject) && amountOfConnectionsInitialized == expectedAmountOfConnections) {
+                        console.log("placing relation (1) " + relationObject.name)
                         relations.set(relationObject.name, relationObject)
                     }
                 })
@@ -433,7 +431,12 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                         }
                     } else {
                         connections.push(connectionObject)
-                        relations.set(relation2.name, relation2)
+                        if (relation1 != relation2) {
+                            console.log("placing relation (3) " + relation2.name)
+                            relations.set(relation2.name, relation2)
+                        } else {
+                            console.log("NOT PLACING (2), but adding connection " + relation2.name)
+                        }
                     }
 
                 }
@@ -446,6 +449,8 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                         // console.log(connectionObject)
                         // @ts-ignore
                         connections.push(connectionObject)
+                        // @ts-ignore
+                        console.log("placing relation (2) " + connectionObject.getRelation2().name)
                         // @ts-ignore
                         relations.set(connectionObject.getRelation2().name, connectionObject.getRelation2())
                     }
@@ -648,31 +653,6 @@ function relation_to_sql() {
 // ]
 
 // const Relations: {} = {
-//     user: {
-//         attributes: {
-//             user_id: true,
-//             username: false,
-//             fname: false,
-//             lname: false
-//         },
-//     },
-//     items: {
-//         attributes: {
-//             item_id: true,
-//             item_name: false,
-//             item_description: false,
-//             item_type: false,
-//         }
-//     }
-
-// }
-
-// const Connections: any[] = [
-//     ["user","items",Cardinality.ONE_TO_MANY_ZERO]
-// ]
-
-
-// const Relations: {} = {
 //     salesperson: {
 //         attributes: {
 //             salesperson_id: true
@@ -728,7 +708,8 @@ const Relations: {} = {
     A: {
         attributes: {
             a: true
-        }
+        },
+        weak: true
     },
     B: {
         attributes: {
@@ -737,12 +718,26 @@ const Relations: {} = {
         recursive: {
             b: "member_b"
         },
-        weak: true
+        // weak: true
+    },
+    C: {
+        attributes: {
+            c: true,
+        }
+    },
+    D: {
+        attributes: {
+            d: true,
+        }
     },
 }
 const Connections: any[] = [
-    ["B","B",Cardinality.ONE_TO_MANY_ONE],
+    ["C","A",Cardinality.ONE_TO_MANY_ONE],
+    ["D","A",Cardinality.ONE_TO_MANY_ONE],
+
     ["A","B",Cardinality.ONE_TO_MANY_ONE],
+    ["B","B",Cardinality.ONE_TO_MANY_ONE],
+
 ]
 // relation_to_sql();
 transpose(Relations, Connections)
