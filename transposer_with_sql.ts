@@ -293,9 +293,6 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                     let r1 = c.getRelation1()
                     let r2 = c.getRelation2()
                     let rlConnTypeData = relationshipConnectionsTable[c.connectionType]
-                    if (rlConnTypeData && rlConnTypeData.flipped) {
-                        [r1, r2] = [r2, r1]
-                    }
                     if (relation === r2) {
                         // console.log("HIT")
                         let newNum = relMapByHits.get(relation) || 0 // should NEVER trigger 0 but ok bruh.
@@ -483,7 +480,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
 
 
-function relation_to_sql() {
+function relation_to_sql(Relations: Object,Connections: any[]) {
     let relations = transpose(Relations, Connections);
     console.log("-----------------------------------------------------------------------------------")
     // relations.forEach(r => {
@@ -561,183 +558,92 @@ function relation_to_sql() {
     })
 }
 
-// const Relations: {} = {
-//     "&": {
-//         attributes: {
-//             id: true,
-//         },
-//     },
-//     A: {
-//         attributes: {
-//             a: true,
-//             b: false
-//         },
-//         datatypes: {
-//             a: "INT UNSIGNED AUTO_INCREMENT",
-//             b: "VARCHAR(50)"
-//         }
-//     },
-
-//     miniA: {
-//         attributes: {
-//             m: false
-//         }
-//     },
-
-//     B: {
-//         attributes: {
-//             // c: true,
-//             d: false
-//         },
-//         datatypes: {
-//             // c: "INT UNSIGNED AUTO_INCREMENT",
-//             d: "ENUM ('type1','type2')",
-//         },
-//         weak: true,
-//     },
-
-//     D: {
-//         attributes: {
-//             f: true,
-//             g: true
-//         },
-//         datatypes: {
-//             f: "INT UNSIGNED AUTO_INCREMENT",
-//             g: "VARCHAR(50)"
-//         }
-//     },
-//     C: {
-//         attributes: {
-//             e: false
-//             // d: false
-//         },
-//         weak: true
-//     },
-
-//     E: {
-//         attributes: {
-
-//         },
-//         weak: true
-//     },
-//     F: {
-//         attributes: {
-//             bruh: false
-//         }
-//     },
-//     G: {
-//         attributes: {
-//             zuh: false
-//         },
-//         weak: true
-//     },
-//     H: {
-//         attributes: {
-//             juh:true,
-//             guh: false
-//         }
-//     }
-// }
-
-// const Connections: any[] = [
-//     ["A", "B", Cardinality.ONE_TO_ZERO],
-//     ["B", "C", Cardinality.ONE_TO_MANY_ONE],
-//     ["D", "C", Cardinality.ONE_TO_MANY_ONE],
-//     ["A", "miniA", Cardinality.SUPER_TO_SUBTYPE],
-//     ["C", "E", Cardinality.ONE_TO_MANY_ONE],
-//     ["E", "F", Cardinality.SUPER_TO_SUBTYPE],
-//     ["&", "G", Cardinality.ONE_TO_MANY_ZERO],
-//     ["&", "H", Cardinality.ONE_TO_MANY_ZERO],
-//     ["F", "G", Cardinality.ONE_TO_MANY_ZERO],
-//     ["F", "H", Cardinality.ONE_TO_MANY_ZERO],
-// ]
-
-// const Relations: {} = {
-//     salesperson: {
-//         attributes: {
-//             salesperson_id: true
-//         },
-//         recursive: {
-//             salesperson_id: "manager_id"  
-//         }
-//     },
-//     customer: {
-//         attributes: {
-//             customer_id: true
-//         }
-//     },
-//     order: {
-//         attributes: {
-//             order_id: true
-//         }
-//     },
-//     product: {
-//         attributes: {
-//             product_id: true
-//         }
-//     },
-//     employee: {
-//         attributes: {
-//             employee_id: true
-//         }
-//     },
-//     part: {
-//         attributes: {
-//             part_id: true
-//         }
-//     },
-//     supplier: {
-//         attributes: {
-//             supplier_id: true
-//         }
-//     },
-// }
-
-// const Connections: any[] = [
-//     ["salesperson","salesperson",Cardinality.ONE_TO_MANY_ONE],
-//     ["salesperson","customer",Cardinality.ONE_TO_MANY_ONE],
-//     ["customer","order",Cardinality.ONE_TO_MANY_ONE],
-//     ["order","product",Cardinality.MANY_TO_MANY],
-//     ["product","part",Cardinality.ONE_TO_MANY_ONE],
-//     ["product","employee",Cardinality.MANY_TO_MANY],
-//     ["part","supplier",Cardinality.MANY_TO_MANY],
-    
-// ]
 
 const Relations: {} = {
-    A: {
+
+    MEMBER: {
         attributes: {
-            a: true
+            member_number: true,
+        },
+        recursive: {
+            member_number: "referrer_member_number"
+        }
+    },
+    MEMBER_LOAN: {
+        attributes: {
+            closing_rate: false,
+        },
+        weak:true
+    },
+    MEMBER_ACCOUNT: {
+        attributes: {
+            current_balance: false
         },
         weak: true
     },
-    B: {
+    TRANSACTION: {
         attributes: {
-            b: true
+            time_stamp: true,
         },
-        recursive: {
-            b: "member_b"
-        },
-        // weak: true
+        weak: true
     },
-    C: {
+    TRANS_TYPE: {
         attributes: {
-            c: true,
+            type_id: true
+        },
+    },
+    ACCOUNT_TYPE: {
+        attributes: {
+            account_type_id: true,
         }
     },
-    D: {
+    LOAN_TYPE: {
         attributes: {
-            d: true,
+            loan_code: true
         }
     },
+    VEHICLE: {
+        attributes: {
+
+        }
+    },
+    PERSONAL: {
+        attributes: {
+
+        }
+    },
+    MORTGAGE: {
+        attributes: {
+
+        }
+    },
+    FIXED_RATE: {
+        attributes: {
+
+        }
+    },
+    ADJUSTABLE: {
+        attributes: {
+
+        }
+    },
+
 }
+
 const Connections: any[] = [
-    ["C","A",Cardinality.ONE_TO_MANY_ONE],
-    ["D","A",Cardinality.ONE_TO_MANY_ONE],
-
-    ["A","B",Cardinality.ONE_TO_MANY_ONE],
-    ["B","B",Cardinality.ONE_TO_MANY_ONE],
-
+    ["MEMBER", "MEMBER", Cardinality.ZERO_TO_MANY_ZERO_NID],
+    ["MEMBER", "MEMBER_LOAN", Cardinality.ONE_TO_MANY_ZERO],
+    ["LOAN_TYPE", "MEMBER_LOAN", Cardinality.ONE_TO_MANY_ZERO],
+    ["LOAN_TYPE", "VEHICLE", Cardinality.SUPER_TO_SUBTYPE],
+    ["LOAN_TYPE", "PERSONAL", Cardinality.SUPER_TO_SUBTYPE],
+    ["LOAN_TYPE", "MORTGAGE", Cardinality.SUPER_TO_SUBTYPE],
+    ["MORTGAGE", "FIXED_RATE", Cardinality.SUPER_TO_SUBTYPE],
+    ["MORTGAGE", "ADJUSTABLE", Cardinality.SUPER_TO_SUBTYPE],
+    ["MEMBER", "MEMBER_ACCOUNT", Cardinality.ONE_TO_MANY_ONE],
+    ["ACCOUNT_TYPE", "MEMBER_ACCOUNT", Cardinality.ONE_TO_MANY_ZERO],
+    ["MEMBER_ACCOUNT", "TRANSACTION", Cardinality.ONE_TO_MANY_ZERO],
+    ["TRANS_TYPE", "TRANSACTION", Cardinality.ONE_TO_MANY_ZERO_NID],
 ]
-// relation_to_sql();
-transpose(Relations, Connections)
+
+relation_to_sql(Relations, Connections);
+// transpose(Relations, Connections)

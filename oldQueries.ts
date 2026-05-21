@@ -644,3 +644,182 @@
 
 // transpose(Relations, Connections)
 // relation_to_sql()
+
+// const Relations: {} = {
+//     "&": {
+//         attributes: {
+//             id: true,
+//         },
+//     },
+//     A: {
+//         attributes: {
+//             a: true,
+//             b: false
+//         },
+//         datatypes: {
+//             a: "INT UNSIGNED AUTO_INCREMENT",
+//             b: "VARCHAR(50)"
+//         }
+//     },
+
+//     miniA: {
+//         attributes: {
+//             m: false
+//         }
+//     },
+
+//     B: {
+//         attributes: {
+//             // c: true,
+//             d: false
+//         },
+//         datatypes: {
+//             // c: "INT UNSIGNED AUTO_INCREMENT",
+//             d: "ENUM ('type1','type2')",
+//         },
+//         weak: true,
+//     },
+
+//     D: {
+//         attributes: {
+//             f: true,
+//             g: true
+//         },
+//         datatypes: {
+//             f: "INT UNSIGNED AUTO_INCREMENT",
+//             g: "VARCHAR(50)"
+//         }
+//     },
+//     C: {
+//         attributes: {
+//             e: false
+//             // d: false
+//         },
+//         weak: true
+//     },
+
+//     E: {
+//         attributes: {
+
+//         },
+//         weak: true
+//     },
+//     F: {
+//         attributes: {
+//             bruh: false
+//         }
+//     },
+//     G: {
+//         attributes: {
+//             zuh: false
+//         },
+//         weak: true
+//     },
+//     H: {
+//         attributes: {
+//             juh:true,
+//             guh: false
+//         }
+//     }
+// }
+
+// const Connections: any[] = [
+//     ["A", "B", Cardinality.ONE_TO_ZERO],
+//     ["B", "C", Cardinality.ONE_TO_MANY_ONE],
+//     ["D", "C", Cardinality.ONE_TO_MANY_ONE],
+//     ["A", "miniA", Cardinality.SUPER_TO_SUBTYPE],
+//     ["C", "E", Cardinality.ONE_TO_MANY_ONE],
+//     ["E", "F", Cardinality.SUPER_TO_SUBTYPE],
+//     ["&", "G", Cardinality.ONE_TO_MANY_ZERO],
+//     ["&", "H", Cardinality.ONE_TO_MANY_ZERO],
+//     ["F", "G", Cardinality.ONE_TO_MANY_ZERO],
+//     ["F", "H", Cardinality.ONE_TO_MANY_ZERO],
+// ]
+
+// const Relations: {} = {
+//     salesperson: {
+//         attributes: {
+//             salesperson_id: true
+//         },
+//         recursive: {
+//             salesperson_id: "manager_id"  
+//         }
+//     },
+//     customer: {
+//         attributes: {
+//             customer_id: true
+//         }
+//     },
+//     order: {
+//         attributes: {
+//             order_id: true
+//         }
+//     },
+//     product: {
+//         attributes: {
+//             product_id: true
+//         }
+//     },
+//     employee: {
+//         attributes: {
+//             employee_id: true
+//         }
+//     },
+//     part: {
+//         attributes: {
+//             part_id: true
+//         }
+//     },
+//     supplier: {
+//         attributes: {
+//             supplier_id: true
+//         }
+//     },
+// }
+
+// const Connections: any[] = [
+//     ["salesperson","salesperson",Cardinality.ONE_TO_MANY_ONE],
+//     ["salesperson","customer",Cardinality.ONE_TO_MANY_ONE],
+//     ["customer","order",Cardinality.ONE_TO_MANY_ONE],
+//     ["order","product",Cardinality.MANY_TO_MANY],
+//     ["product","part",Cardinality.ONE_TO_MANY_ONE],
+//     ["product","employee",Cardinality.MANY_TO_MANY],
+//     ["part","supplier",Cardinality.MANY_TO_MANY],
+    
+// ]
+
+// const Relations: {} = {
+//     A: {
+//         attributes: {
+//             a: true
+//         },
+//         weak: true
+//     },
+//     B: {
+//         attributes: {
+//             b: true
+//         },
+//         recursive: {
+//             b: "member_b"
+//         },
+//         // weak: true
+//     },
+//     C: {
+//         attributes: {
+//             c: true,
+//         }
+//     },
+//     D: {
+//         attributes: {
+//             d: true,
+//         }
+//     },
+// }
+// const Connections: any[] = [
+//     ["C","A",Cardinality.ONE_TO_MANY_ONE],
+//     ["D","A",Cardinality.ONE_TO_MANY_ONE],
+
+//     ["A","B",Cardinality.ONE_TO_MANY_ONE],
+//     ["B","B",Cardinality.ONE_TO_MANY_ONE],
+
+// ]
