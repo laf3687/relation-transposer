@@ -2,9 +2,11 @@ export class MustExistInConnection {
     public relationConnection;
     public attributeName;
     public mainPKNameRecursive: string = "null";
-    constructor(relation: Relation, attributeName: string) {
+    public connectionType: string
+    constructor(relation: Relation, attributeName: string, connectionType: string) {
         this.relationConnection = relation;
         this.attributeName = attributeName;
+        this.connectionType = connectionType
     }
     setRecursive(attribute_string: string) {
         this.mainPKNameRecursive = attribute_string;
@@ -86,8 +88,8 @@ export class Relation {
         //     this.isAssociativeEntity = true
         // }
     }
-    addMustExistInConnection(relationObject: Relation, identifierName: string, recursiveKey: string = "null") {
-        let mei = new MustExistInConnection(relationObject, identifierName)
+    addMustExistInConnection(relationObject: Relation, identifierName: string, recursiveKey: string, connectionType: string) {
+        let mei = new MustExistInConnection(relationObject, identifierName, connectionType)
         if (recursiveKey !== "null") {
             mei.setRecursive(recursiveKey)
         }

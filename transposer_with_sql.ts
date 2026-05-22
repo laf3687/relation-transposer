@@ -53,13 +53,13 @@ function setSubtypeRelationConnection(supertype: Relation, subtype: Relation, co
             subTypeKeyAttribute.setRecursiveName(key.recursiveAttributeName)
         }
         subtype.addAttribute(subTypeKeyAttribute) // transfers the PKS over and makes them FKS as well.
-        subtype.addMustExistInConnection(supertype, key.name) // creates MEI connection
+        subtype.addMustExistInConnection(supertype, key.name, "null", Cardinality.SUPER_TO_SUBTYPE) // creates MEI connection
     })
     subtype.setInheritedFrom(supertype);
     subtype.setSubType(true)
 }
 
-function setOneToManyConnection(relation1: Relation, relation2: Relation, ignoreForeignKeys: boolean = false, isIdentifying: boolean = true, manyToMany: boolean = false, needsNotNull: boolean = false) {
+function setOneToManyConnection(relation1: Relation, relation2: Relation, ignoreForeignKeys: boolean = false, isIdentifying: boolean = true, manyToMany: boolean = false, needsNotNull: boolean = false, connectionType: string) {
     let recursive = false;
     if (relation1 === relation2) {
         recursive = true;
@@ -156,15 +156,15 @@ function setOneToManyConnection(relation1: Relation, relation2: Relation, ignore
         }
 
         relation2.addAttribute(foreignKey)
-        relation2.addMustExistInConnection(relation1, keyName, key.name) // creates MEI connection
+        relation2.addMustExistInConnection(relation1, keyName, key.name, connectionType) // creates MEI connection
     })
 }
 
 
 function setManyToManyConnection(relation1: Relation, relation2: Relation, extraAttributes: Attribute[]): Relation {
     let newRelation = new Relation(relation1.name + "_" + relation2.name, [])
-    setOneToManyConnection(relation1, newRelation, true, true, true)
-    setOneToManyConnection(relation2, newRelation, true, true, true)
+    setOneToManyConnection(relation1, newRelation, true, true, true, false, Cardinality.ONE_TO_MANY_ONE)
+    setOneToManyConnection(relation2, newRelation, true, true, true, false, Cardinality.ONE_TO_MANY_ONE)
     return newRelation
 }
 
@@ -246,27 +246,23 @@ const relationshipConnectionsTable: any = {
     "ZERO_TO_MANY_ONE_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: false },
     "ONE_TO_MANY_ZERO_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: true },
     "ONE_TO_MANY_ONE_NID": { flipped: false, ignFK: false, isID: false, MtM: false, nNN: true },
-
-
-
-
-
 }
 function setConnection(relation1: Relation, relation2: Relation, connectionType: string) {
     if (connectionType === Cardinality.SUPER_TO_SUBTYPE) {
         setSubtypeRelationConnection(relation1, relation2, "placeholder")
     } else if (relationshipConnectionsTable[connectionType] !== null) {
         const conn = relationshipConnectionsTable[connectionType]
-        if (conn.flipped) {
-            [relation1, relation2] = [relation2, relation1]
-        }
+        // if (conn.flipped) {
+        //     [relation1, relation2] = [relation2, relation1]
+        // }
         setOneToManyConnection(
             relation1,
             relation2,
             conn.ignFK,
             conn.isID,
             conn.MtM,
-            conn.nNN
+            conn.nNN,
+            connectionType
         )
     } else {
         throw new Error("this connection type does not exist")
@@ -357,7 +353,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                     // const expectedAmountOfConnections = connectionLayerSet?.filter((e) => {return e.getRelation1() != e.getRelation2()}).length
                     const expectedAmountOfConnections = connectionLayerSet?.length
                     let amountOfConnectionsInitialized = 0
-                    
+
                     connectionLayerSet?.forEach((conn) => {
                         console.log(`${conn.getRelation1().name} -> ${conn.getRelation2().name}`)
                         if (relationLayerSet.has(conn.getRelation1()) && !thisLayerFinishedConnections.has(conn.getRelation1())) {
@@ -480,7 +476,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
 
 
-function relation_to_sql(Relations: Object,Connections: any[]) {
+function relation_to_sql(Relations: Object, Connections: any[]) {
     let relations = transpose(Relations, Connections);
     console.log("-----------------------------------------------------------------------------------")
     // relations.forEach(r => {
@@ -558,92 +554,347 @@ function relation_to_sql(Relations: Object,Connections: any[]) {
     })
 }
 
-
 const Relations: {} = {
-
-    MEMBER: {
+    user: {
         attributes: {
-            member_number: true,
+            user_id: true,
+            username: false,
+            first_name: false,
+            middle_name: false,
+            last_name: false,
+            email: false,
+            phone_num: false,
+            birth_date: false,
+            pronouns: false,
+            nickname: false,
+            hometown: false,
+            homepage_link: false,
+            profile_picture_link: false,
+            student_or_staff: false,
         },
-        recursive: {
-            member_number: "referrer_member_number"
+        datatypes: {
+            user_id: "INT UNSIGNED AUTO_INCREMENT",
+            username: "VARCHAR(50) UNIQUE NOT NULL",
+            first_name: "VARCHAR(50)",
+            middle_name: "VARCHAR(50)",
+            last_name: "VARCHAR(50)",
+            email: "VARCHAR(255) NOT NULL",
+            phone_num: "VARCHAR(50)",
+            birth_date: "DATE",
+            pronouns: "VARCHAR(50)",
+            nickname: "VARCHAR(50)",
+            hometown: "VARCHAR(50)",
+            homepage_link: "VARCHAR(255)",
+            profile_picture_link: "VARCHAR(255)",
+            student_or_staff: "ENUM('student','teacher') NOT NULL",
         }
     },
-    MEMBER_LOAN: {
+
+    student: {
         attributes: {
-            closing_rate: false,
+
+        }
+    },
+
+    staff: {
+        attributes: {
+            teacher_or_teacher_assistant: false 
+        },
+        datatypes: {
+            teacher_or_teacher_assistant: "ENUM('teacher','teacher_assistant') NOT NULL"
+        }
+    },
+
+    teacher: {
+        attributes: {
+
+        }
+    },
+
+    teacher_assistant: { 
+        attributes: {
+
+        }
+    },
+
+    login_info: {
+        attributes: {
+            hashed_password:false
+        },
+        datatypes: {
+            hashed_password:"VARCHAR(255)"
         },
         weak:true
     },
-    MEMBER_ACCOUNT: {
+
+    course: {
         attributes: {
-            current_balance: false
+            course_section: true,
+            course_year: true,
+            course_name: false,
+            course_description: false,
+        },
+        datatypes: {
+            course_section: "INT UNSIGNED",
+            course_year: "YEAR",
+            course_name: "VARCHAR(50)",
+            course_description: "VARCHAR(255)",
+        }
+    },
+    announcements: {
+        attributes: {
+            datetime_posted: false,
+            announcement: false
+        },
+        datatypes:{
+            datetime_posted: "DATETIME",
+            announcement: "VARCHAR(2000)"
+        },
+        weak: true,
+    },
+    gradable: {
+        attributes: {
+            gradable_id: true,
+            points: false,
+            weight: false,
+            start_date: false,
+            due_date: false,
+            gradable_type: false,
+        },
+        datatypes: {
+            gradable_id: "INT UNSIGNED AUTO_INCREMENT",
+            points: "INT",
+            weight: "DECIMAL(5,2)",
+            start_date: "DATETIME",
+            due_date: "DATETIME",
+            gradable_type: "ENUM('quiz','discussion_forum','assignment')",
+        }
+    },
+
+    student_gradable:{ 
+        attributes: {
+            grade_received:false,
+            comment:false,
+        },
+        weak:true,
+        datatypes: {
+            grade_received:"INT",
+            comment:"VARCHAR(2000)",
+        }
+    },
+
+
+    assignment: {
+        attributes: {
+            assignment_details: false
+        },
+        datatypes: {
+            assignment_details: "VARCHAR(500)"
+        }
+    },
+    discussion_forum: {
+        attributes: {
+            discussion_details: false,
+        },
+        datatypes: {
+            discussion_details: "VARCHAR(500)"
+        }
+        // weak: true,
+    },
+    discussion_post: {
+        attributes: {
+            post_id: true,
+            message: false
+            // reply_id
+        },
+        datatypes: {
+            post_id: "INT UNSIGNED AUTO_INCREMENT",
+            message: "VARCHAR(2000)"
+        },
+        recursive: {
+            post_id: "reply_id"
+        }
+    },
+    quiz: {
+        attributes: {
+
+        },
+        weak: true,
+    },
+    quiz_question: {
+        attributes: {
+            question_number: true,
+            question: false,
+        },
+        datatypes: {
+            question_number: "INT UNSIGNED AUTO_INCREMENT",
+            question: "VARCHAR(500)"
         },
         weak: true
     },
-    TRANSACTION: {
+
+    question_answer: {
         attributes: {
-            time_stamp: true,
+            answer:false,
+            answer_type: false
         },
-        weak: true
-    },
-    TRANS_TYPE: {
-        attributes: {
-            type_id: true
+        datatypes:{
+            answer:"VARCHAR(500)",
+            answer_type:"ENUM ('free_response','multiple_choice')"
         },
-    },
-    ACCOUNT_TYPE: {
-        attributes: {
-            account_type_id: true,
-        }
-    },
-    LOAN_TYPE: {
-        attributes: {
-            loan_code: true
-        }
-    },
-    VEHICLE: {
-        attributes: {
-
-        }
-    },
-    PERSONAL: {
-        attributes: {
-
-        }
-    },
-    MORTGAGE: {
-        attributes: {
-
-        }
-    },
-    FIXED_RATE: {
-        attributes: {
-
-        }
-    },
-    ADJUSTABLE: {
-        attributes: {
-
-        }
+        weak: true,
     },
 
+
+    free_response: {
+        attributes: {
+            // answer: false
+        }
+    },
+    multiple_choice: {
+        attributes: {
+            is_answer: false
+        },
+        datatypes: {
+            is_answer: "TINYINT(1)"
+        }
+    }
 }
 
-const Connections: any[] = [
-    ["MEMBER", "MEMBER", Cardinality.ZERO_TO_MANY_ZERO_NID],
-    ["MEMBER", "MEMBER_LOAN", Cardinality.ONE_TO_MANY_ZERO],
-    ["LOAN_TYPE", "MEMBER_LOAN", Cardinality.ONE_TO_MANY_ZERO],
-    ["LOAN_TYPE", "VEHICLE", Cardinality.SUPER_TO_SUBTYPE],
-    ["LOAN_TYPE", "PERSONAL", Cardinality.SUPER_TO_SUBTYPE],
-    ["LOAN_TYPE", "MORTGAGE", Cardinality.SUPER_TO_SUBTYPE],
-    ["MORTGAGE", "FIXED_RATE", Cardinality.SUPER_TO_SUBTYPE],
-    ["MORTGAGE", "ADJUSTABLE", Cardinality.SUPER_TO_SUBTYPE],
-    ["MEMBER", "MEMBER_ACCOUNT", Cardinality.ONE_TO_MANY_ONE],
-    ["ACCOUNT_TYPE", "MEMBER_ACCOUNT", Cardinality.ONE_TO_MANY_ZERO],
-    ["MEMBER_ACCOUNT", "TRANSACTION", Cardinality.ONE_TO_MANY_ZERO],
-    ["TRANS_TYPE", "TRANSACTION", Cardinality.ONE_TO_MANY_ZERO_NID],
+const Connections = [
+    ["user", "course", Cardinality.MANY_TO_MANY],
+
+    ["user","login_info",Cardinality.ONE_TO_MANY_ONE],
+    ["course", "gradable", Cardinality.ONE_TO_MANY_ZERO],
+    ["course", "announcements", Cardinality.ONE_TO_MANY_ZERO],
+    ["gradable", "quiz", Cardinality.SUPER_TO_SUBTYPE],
+    ["gradable", "discussion_forum", Cardinality.SUPER_TO_SUBTYPE],
+    ["gradable", "assignment", Cardinality.SUPER_TO_SUBTYPE],
+    ["discussion_forum", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
+    ["discussion_post", "discussion_post", Cardinality.ONE_TO_MANY_ZERO],
+    ["quiz", "quiz_question", Cardinality.ONE_TO_MANY_ONE],
+    ["quiz_question", "question_answer", Cardinality.ONE_TO_MANY_ONE],
+    ["question_answer", "free_response", Cardinality.SUPER_TO_SUBTYPE],
+    ["question_answer", "multiple_choice", Cardinality.SUPER_TO_SUBTYPE],
+
+    ["user","student",Cardinality.SUPER_TO_SUBTYPE],
+    ["user","staff",Cardinality.SUPER_TO_SUBTYPE],
+    ["staff","teacher",Cardinality.SUPER_TO_SUBTYPE],
+    ["staff","teacher_assistant",Cardinality.SUPER_TO_SUBTYPE],
+
+    ["student","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
+    ["gradable","student_gradable",Cardinality.ONE_TO_MANY_ZERO],
+
 ]
 
-relation_to_sql(Relations, Connections);
-// transpose(Relations, Connections)
+
+// relation_to_sql(Relations, Connections);
+const transposed_relations = transpose(Relations, Connections)
+
+// console.log(transposed_relations.get("B"))
+
+
+const CardinalityPlantUML: any = {
+    // ----------------------1:1--------------------------
+    "ONE_TO_ZERO": "||--o|",
+    "ONE_TO_ZERO_NID": "||..o|",
+    // ----------------------1:M-------------------------
+    "ZERO_TO_MANY_ZERO": "|o--o{",
+    "ZERO_TO_MANY_ONE": "|o--|{",
+    "ONE_TO_MANY_ZERO": "||--o{",
+    "ONE_TO_MANY_ONE": "||--|{",
+    "ZERO_TO_MANY_ZERO_NID": "|o..o{",
+    "ZERO_TO_MANY_ONE_NID": "|o..|{",
+    "ONE_TO_MANY_ZERO_NID": "||..o{",
+    "ONE_TO_MANY_ONE_NID": "||..|{",
+}
+
+
+function plantUML(noFKS: boolean = true) {
+    let connections: any[] = []
+    let stringArray: string[] = []
+    transposed_relations.forEach((relation) => {
+        // console.log(relation.name)
+        let primaryKeys: Attribute[] = []
+        let otherAttributes: Attribute[] = []
+
+        relation.getAttributes().forEach((attribute) => {
+            if (attribute.isForeignKey() && noFKS) return
+            if (attribute.isIdentifier()) {
+                primaryKeys.push(attribute)
+            } else {
+                otherAttributes.push(attribute)
+            }
+        })
+        // console.log(primaryKeys)
+        let objectString = "";
+        objectString += `object ${relation.name} {` + `\r\n`
+        if (primaryKeys.length == 0) {
+            objectString += `\r\n`
+        } else {
+            primaryKeys.forEach((pk) => {
+                objectString += `    ${pk.toString()}` + `\r\n`
+            })
+        }
+        objectString += `    --\r\n`
+
+        if (otherAttributes.length == 0) {
+            objectString += `\r\n`
+        } else {
+            otherAttributes.forEach((a) => {
+                objectString += `    ${a.toString()}` + `\r\n`
+            })
+        }
+
+        objectString += "}" + "\r\n"
+        // console.log(objectString)
+
+        stringArray.push(objectString)
+        let meiSet = new Set<Relation>()
+
+        relation.mustExistIn.forEach((mei) => {
+            // console.log(mei.relationConnection.name)
+            if (!meiSet.has(mei.relationConnection)) {
+                connections.push(
+                    [
+                        mei.relationConnection.name,
+                        relation.name,
+                        mei.connectionType
+                    ]
+                )
+                meiSet.add(mei.relationConnection)
+            }
+
+        })
+
+    })
+
+    connections.forEach((conn) => {
+        if (conn[2] === Cardinality.SUPER_TO_SUBTYPE) {
+            // console.log(`${conn[0]} -- ${conn[1]} : is-a`)
+            stringArray.push(`${conn[0]} -- ${conn[1]} : is-a` + `\r\n`)
+        } else {
+            // console.log(`${conn[0]} ${CardinalityPlantUML[conn[2]]} ${conn[1]}`)
+            stringArray.push(`${conn[0]} ${CardinalityPlantUML[conn[2]]} ${conn[1]}` + `\r\n`)
+        }
+    })
+    console.log(stringArray.join(""))
+
+}
+plantUML(true)
+// function getParentRelation(relationName: string): Relation {
+//     if (transposed_relations.has(relationName)) {
+//         let relation: any = transposed_relations.get(relationName)
+//         let isParent = false
+//         while (relation?.isSubType()) {
+//             relation = relation.getInheritedFrom()
+//         }
+//         return relation
+
+//     } else {
+//         throw new Error("This relation does not exist.")
+//     }
+// }
+
+// let parent = getParentRelation("JUNIOR")
+// console.log(parent.name)

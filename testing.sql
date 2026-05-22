@@ -1,0 +1,2 @@
+select distinct reportsTo as rT, employeeNumber as eN, concat(employees.firstName,' ',employees.lastName) as refName, (select concat(employees.firstName,' ',employees.lastName) from employees where employeeNumber = rT) as empName
+from employees;
