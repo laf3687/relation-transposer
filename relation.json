@@ -1,0 +1,19 @@
+{
+    "Relations": {
+        "A": {
+            "attributes": {
+                "a": true,
+                "b": false
+            }
+        },
+        "B": {
+            "attributes": {
+                "c": true,
+                "d": false
+            }
+        }
+    },
+    "Connections": [
+        ["A","B","ONE_TO_MANY_ONE"]
+    ]
+}

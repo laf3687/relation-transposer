@@ -14,17 +14,22 @@ export class MustExistInConnection {
 }
 
 export class Attribute {
-    public name;
-    public identifier;
-    public foreignKey;
+    public name: string;
+    public identifier: boolean;
+    public foreignKey: boolean;
     public datatype?: string;
     public foriegnKeyNotNULL = false;
     // 5/15/26 new addition for custom set recursive attribute names
     public recursiveAttributeName?: string;
-    constructor(name: string, identifierBoolean: boolean, foreignKeyBoolean: boolean) {
+    // 5/23/26 obtained from attribute for foreignkeys
+    public obtainedFrom: unknown;
+    public isNative: boolean;
+    constructor(name: string, identifierBoolean: boolean, foreignKeyBoolean: boolean, obtainedFrom: unknown = null, isNative: boolean) {
         this.name = name
         this.identifier = identifierBoolean
         this.foreignKey = foreignKeyBoolean
+        this.obtainedFrom = obtainedFrom
+        this.isNative = isNative
     }
     isIdentifier() {
         return this.identifier;
@@ -50,7 +55,9 @@ export class Attribute {
     setRecursiveName(attributeName: string) {
         this.recursiveAttributeName = attributeName
     }
-
+    isNativeAttribute(): boolean {
+        return this.isNative
+    }
     toString() {
         let id = ""
         if (this.isIdentifier() || this.isForeignKey()) {
