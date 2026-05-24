@@ -647,7 +647,7 @@ function plantUML(noFKS: boolean = true, transposed_relations: Map<String, Relat
 }
 
 
-async function setRelations(filename: String) {
+async function setRelations(filename: string) {
     try {
         const response = await fs.readFile(filename, 'utf8');
         const items = JSON.parse(response)
@@ -659,14 +659,16 @@ async function setRelations(filename: String) {
     }
 }
 
-async function loadRelations(filename: String) {
+async function loadRelations(filename: string) {
     const [Relations, Connections] = await setRelations(filename)
-    // const transposed_relations = transpose(Relations, Connections)
+    const transposed_relations = transpose(Relations, Connections)
     // plantUML(false, transposed_relations)
-    relation_to_sql(Relations, Connections)
+    // relation_to_sql(Relations, Connections)
 }
+const args = process.argv.at(2)
+loadRelations(args || "none")
 
-loadRelations("ACME_Online.json")
+// loadRelations("ACME_Online.json")
 
 // function getParentRelation(relationName: string): Relation {
 //     if (transposed_relations.has(relationName)) {
