@@ -1,0 +1,88 @@
+{
+    "Relations": {
+
+        "CATEGORY": {
+            "attributes": {
+                "category_name": true,
+                "shipping_per_pound": false,
+                "offers_allowed": false
+            }
+        },
+        "ITEM": {
+            "attributes": {
+                "item_number": true,
+                "item_name": false,
+                "description": false,
+                "modem_number": false
+            }
+        },
+        "LINE_ITEM": {
+            "attributes": {
+                "quantity": false,
+                "shipping_amount": false
+            },
+            "weak":true
+        },
+        "ORDER": {
+            "attributes": {
+                "order_id": true,
+                "total_cost": false
+            }
+        },
+        "OFFER": {
+            "attributes": {
+                "offer_code": true,
+                "discount_amt": false,
+                "min_amount": false,
+                "application_date": false
+            }
+        },
+        "CUSTOMER": {
+            "attributes": {
+                "customer_id": true,
+                "customer_name": false,
+                "address": false,
+                "email": false
+            }
+        },
+        "BUSINESS": {
+            "attributes": {
+                "payment_terms": false
+            }
+        },
+        "HOME": {
+            "attributes": {
+                "credit_card_num": false,
+                "card_expiration_date": false
+            }
+        },
+        "PURCHASE_CONTACT": {
+            "attributes": {
+                "contact_name": true,
+                "contact_phone": false
+            },
+            "weak":true
+        },
+        "GUARANTEE": {
+            "attributes": {
+                "url": false,
+                "refund_amount": false
+            },
+            "weak":true
+        }
+
+    },
+    "Connections": [
+        ["CATEGORY","ITEM","ONE_TO_MANY_ONE_NID"],
+        ["ITEM","LINE_ITEM","ONE_TO_MANY_ZERO"],
+        ["ORDER","LINE_ITEM","ONE_TO_MANY_ONE"],
+        ["OFFER","ORDER","ZERO_TO_MANY_ZERO_NID"],
+        ["CUSTOMER","ORDER","ONE_TO_MANY_ZERO_NID"],
+        ["CUSTOMER","HOME","SUPER_TO_SUBTYPE"],
+        ["CUSTOMER","BUSINESS","SUPER_TO_SUBTYPE"],
+        ["HOME","GUARANTEE","ONE_TO_MANY_ZERO"],
+        ["ORDER","GUARANTEE","ONE_TO_MANY_ZERO"],
+        ["BUSINESS","PURCHASE_CONTACT","ONE_TO_MANY_ONE"]
+
+    ]
+}

@@ -546,8 +546,8 @@ function relation_to_sql(Relations: Object, Connections: any[]) {
                 referenceNames.push(reference.get("referenceName"))
             }
             let defaultString = `\n    ${colorString("CONSTRAINT", 0, 155, 255)} ${r.name.toLowerCase()}_${attribute.toLocaleLowerCase()}_fk ${colorString("FOREIGN KEY", 210, 210, 23)} (${attributeNames.join(", ")}) ${colorString("REFERENCES", 210, 210, 23)} ${attribute.toLocaleLowerCase()} (${referenceNames.join(", ")})`
-            defaultString += `\n        ${colorString("ON UPDATE CASCADE", 255, 255, 255)}`
-            defaultString += `\n        ${colorString("ON DELETE CASCADE", 255, 255, 255)}`
+            // defaultString += `\n        ${colorString("ON UPDATE CASCADE", 255, 255, 255)}`
+            // defaultString += `\n        ${colorString("ON DELETE CASCADE", 255, 255, 255)}`
             stringArray.push(defaultString)
         })
         createStatement += stringArray.join(",")
@@ -666,7 +666,7 @@ async function loadRelations(filename: String) {
     relation_to_sql(Relations, Connections)
 }
 
-loadRelations("relation.json")
+loadRelations("ACME_Online.json")
 
 // function getParentRelation(relationName: string): Relation {
 //     if (transposed_relations.has(relationName)) {
