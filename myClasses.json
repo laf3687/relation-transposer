@@ -1,0 +1,205 @@
+{
+    "Relations": {
+        "user": {
+            "attributes": {
+                "user_id": true,
+                "username": false,
+                "first_name": false,
+                "middle_name": false,
+                "last_name": false,
+                "email": false,
+                "phone_num": false,
+                "birth_date": false,
+                "pronouns": false,
+                "nickname": false,
+                "hometown": false,
+                "homepage_link": false,
+                "profile_picture_link": false,
+                "student_or_staff": false
+            },
+            "datatypes": {
+                "user_id": "INT UNSIGNED AUTO_INCREMENT",
+                "username": "VARCHAR(50) UNIQUE NOT NULL",
+                "first_name": "VARCHAR(50)",
+                "middle_name": "VARCHAR(50)",
+                "last_name": "VARCHAR(50)",
+                "email": "VARCHAR(255) NOT NULL",
+                "phone_num": "VARCHAR(50)",
+                "birth_date": "DATE",
+                "pronouns": "VARCHAR(50)",
+                "nickname": "VARCHAR(50)",
+                "hometown": "VARCHAR(50)",
+                "homepage_link": "VARCHAR(255)",
+                "profile_picture_link": "VARCHAR(255)",
+                "student_or_staff": "ENUM('student','teacher') NOT NULL"
+            }
+        },
+        "student": {
+            "attributes": {}
+        },
+        "staff": {
+            "attributes": {
+                "teacher_or_teacher_assistant": false
+            },
+            "datatypes": {
+                "teacher_or_teacher_assistant": "ENUM('teacher','teacher_assistant') NOT NULL"
+            }
+        },
+        "teacher": {
+            "attributes": {}
+        },
+        "teacher_assistant": {
+            "attributes": {}
+        },
+        "login_info": {
+            "attributes": {
+                "hashed_password": false
+            },
+            "datatypes": {
+                "hashed_password": "VARCHAR(255)"
+            },
+            "weak": true
+        },
+        "course": {
+            "attributes": {
+                "course_section": true,
+                "course_year": true,
+                "course_name": false,
+                "course_description": false
+            },
+            "datatypes": {
+                "course_section": "INT UNSIGNED",
+                "course_year": "YEAR",
+                "course_name": "VARCHAR(50)",
+                "course_description": "VARCHAR(255)"
+            }
+        },
+        "announcements": {
+            "attributes": {
+                "datetime_posted": false,
+                "announcement": false
+            },
+            "datatypes": {
+                "datetime_posted": "DATETIME",
+                "announcement": "VARCHAR(2000)"
+            },
+            "weak": true
+        },
+        "gradable": {
+            "attributes": {
+                "gradable_id": true,
+                "points": false,
+                "weight": false,
+                "start_date": false,
+                "due_date": false,
+                "gradable_type": false
+            },
+            "datatypes": {
+                "gradable_id": "INT UNSIGNED AUTO_INCREMENT",
+                "points": "INT",
+                "weight": "DECIMAL(5,2)",
+                "start_date": "DATETIME",
+                "due_date": "DATETIME",
+                "gradable_type": "ENUM('quiz','discussion_forum','assignment')"
+            }
+        },
+        "student_gradable": {
+            "attributes": {
+                "grade_received": false,
+                "comment": false
+            },
+            "weak": true,
+            "datatypes": {
+                "grade_received": "INT",
+                "comment": "VARCHAR(2000)"
+            }
+        },
+        "assignment": {
+            "attributes": {
+                "assignment_details": false
+            },
+            "datatypes": {
+                "assignment_details": "VARCHAR(500)"
+            }
+        },
+        "discussion_forum": {
+            "attributes": {
+                "discussion_details": false
+            },
+            "datatypes": {
+                "discussion_details": "VARCHAR(500)"
+            }
+        },
+        "discussion_post": {
+            "attributes": {
+                "post_id": true,
+                "message": false
+            },
+            "datatypes": {
+                "post_id": "INT UNSIGNED AUTO_INCREMENT",
+                "message": "VARCHAR(2000)"
+            },
+            "recursive": {
+                "post_id": "reply_id"
+            }
+        },
+        "quiz": {
+            "attributes": {},
+            "weak": true
+        },
+        "quiz_question": {
+            "attributes": {
+                "question_number": true,
+                "question": false
+            },
+            "datatypes": {
+                "question_number": "INT UNSIGNED AUTO_INCREMENT",
+                "question": "VARCHAR(500)"
+            },
+            "weak": true
+        },
+        "question_answer": {
+            "attributes": {
+                "answer": false,
+                "answer_type": false
+            },
+            "datatypes": {
+                "answer": "VARCHAR(500)",
+                "answer_type": "ENUM ('free_response','multiple_choice')"
+            },
+            "weak": true
+        },
+        "free_response": {
+            "attributes": {}
+        },
+        "multiple_choice": {
+            "attributes": {
+                "is_answer": false
+            },
+            "datatypes": {
+                "is_answer": "TINYINT(1)"
+            }
+        }
+    },
+    "Connections": [
+        ["user", "course", "MANY_TO_MANY"],
+        ["user","login_info","ONE_TO_MANY_ONE"],
+        ["course", "gradable", "ONE_TO_MANY_ZERO"],
+        ["course", "announcements", "ONE_TO_MANY_ZERO"],
+        ["gradable", "quiz", "SUPER_TO_SUBTYPE"],
+        ["gradable", "discussion_forum", "SUPER_TO_SUBTYPE"],
+        ["gradable", "assignment", "SUPER_TO_SUBTYPE"],
+        ["discussion_forum", "discussion_post", "ONE_TO_MANY_ZERO"],
+        ["discussion_post", "discussion_post", "ONE_TO_MANY_ZERO"],
+        ["quiz", "quiz_question", "ONE_TO_MANY_ONE"],
+        ["quiz_question", "question_answer", "ONE_TO_MANY_ONE"],
+        ["question_answer", "free_response", "SUPER_TO_SUBTYPE"],
+        ["question_answer", "multiple_choice", "SUPER_TO_SUBTYPE"],
+        ["user","student","SUPER_TO_SUBTYPE"],
+        ["user","staff","SUPER_TO_SUBTYPE"],
+        ["staff","teacher","SUPER_TO_SUBTYPE"],
+        ["staff","teacher_assistant","SUPER_TO_SUBTYPE"],
+        ["student","student_gradable","ONE_TO_MANY_ZERO"],
+        ["gradable","student_gradable","ONE_TO_MANY_ZERO"]
+    ]
+}

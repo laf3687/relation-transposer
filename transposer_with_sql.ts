@@ -662,10 +662,11 @@ async function setRelations(filename: string) {
 async function loadRelations(filename: string) {
     const [Relations, Connections] = await setRelations(filename)
     const transposed_relations = transpose(Relations, Connections)
-    // plantUML(false, transposed_relations)
+    plantUML(false, transposed_relations)
     // relation_to_sql(Relations, Connections)
 }
 const args = process.argv.at(2)
+
 loadRelations(args || "none")
 
 // loadRelations("ACME_Online.json")

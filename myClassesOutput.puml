@@ -1,0 +1,145 @@
+object user {
+    user_id <<PK>>
+    --
+    username
+    first_name
+    middle_name
+    last_name
+    email
+    phone_num
+    birth_date
+    pronouns
+    nickname
+    hometown
+    homepage_link
+    profile_picture_link
+    student_or_staff
+}
+object course {
+    course_section <<PK>>
+    course_year <<PK>>
+    --
+    course_name
+    course_description
+}
+object student {
+    user_id <<PK, FK>>
+    --
+
+}
+object staff {
+    user_id <<PK, FK>>
+    --
+    teacher_or_teacher_assistant
+}
+object teacher {
+    user_id <<PK, FK>>
+    --
+
+}
+object teacher_assistant {
+    user_id <<PK, FK>>
+    --
+
+}
+object login_info {
+    user_id <<PK, FK>>
+    --
+    hashed_password
+}
+object announcements {
+    course_section <<PK, FK>>
+    course_year <<PK, FK>>
+    --
+    datetime_posted
+    announcement
+}
+object gradable {
+    gradable_id <<PK>>
+    --
+    points
+    weight
+    start_date
+    due_date
+    gradable_type
+    course_section <<FK>>
+    course_year <<FK>>
+}
+object assignment {
+    gradable_id <<PK, FK>>
+    --
+    assignment_details
+}
+object discussion_forum {
+    gradable_id <<PK, FK>>
+    --
+    discussion_details
+}
+object discussion_post {
+    post_id <<PK>>
+    --
+    message
+    discussion_forum_gradable_id <<FK>>
+    reply_id <<FK>>
+}
+object quiz {
+    gradable_id <<PK, FK>>
+    --
+
+}
+object quiz_question {
+    question_number <<PK>>
+    --
+    question
+    quiz_gradable_id <<FK>>
+}
+object question_answer {
+    question_number <<PK, FK>>
+    --
+    answer
+    answer_type
+}
+object free_response {
+    question_number <<PK, FK>>
+    --
+
+}
+object multiple_choice {
+    question_number <<PK, FK>>
+    --
+    is_answer
+}
+object student_gradable {
+    student_user_id <<PK, FK>>
+    gradable_id <<PK, FK>>
+    --
+    grade_received
+    comment
+}
+object user_course {
+    user_id <<PK, FK>>
+    course_section <<PK, FK>>
+    course_year <<PK, FK>>
+    --
+
+}
+user -- student : is-a
+user -- staff : is-a
+staff -- teacher : is-a
+staff -- teacher_assistant : is-a
+user ||--|{ login_info
+course ||--o{ announcements
+course ||--o{ gradable
+gradable -- assignment : is-a
+gradable -- discussion_forum : is-a
+discussion_forum ||--o{ discussion_post
+discussion_post ||--o{ discussion_post
+gradable -- quiz : is-a
+quiz ||--|{ quiz_question
+quiz_question ||--|{ question_answer
+question_answer -- free_response : is-a
+question_answer -- multiple_choice : is-a
+student ||--o{ student_gradable
+gradable ||--o{ student_gradable
+user ||--|{ user_course
+course ||--|{ user_course
