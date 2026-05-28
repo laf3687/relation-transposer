@@ -121,7 +121,7 @@ object user_course {
     course_section <<PK, FK>>
     course_year <<PK, FK>>
     --
-
+    join_date
 }
 user -- student : is-a
 user -- staff : is-a

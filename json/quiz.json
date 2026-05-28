@@ -1,0 +1,36 @@
+{
+    "Relations": {
+        "quiz": {
+            "attributes": {
+                "quiz_id": true
+            },
+            "weak": true
+        },
+        "quiz_question": {
+            "attributes": {
+                "question_number": true,
+                "question": false
+            }
+        },
+        "question_answer": {
+            "attributes": {
+                "answer": false,
+                "answer_type": false
+            }
+        },
+        "free_response": {
+            "attributes": {}
+        },
+        "multiple_choice": {
+            "attributes": {
+                "is_answer": false
+            }
+        }
+    },
+    "Connections": [
+        ["quiz","quiz_question","ONE_TO_MANY_ONE"],
+        ["quiz_question","question_answer","ONE_TO_MANY_ONE"],
+        ["question_answer","free_response","SUPER_TO_SUBTYPE"],
+        ["question_answer","multiple_choice","SUPER_TO_SUBTYPE"]
+    ]
+}

@@ -11,9 +11,16 @@
                 "c": true,
                 "d": false
             }
+        },
+        "C": {
+            "attributes": {
+                "e": true,
+                "f": false
+            }
         }
     },
     "Connections": [
-        ["A","B","ONE_TO_MANY_ONE"]
+        ["A","B","ONE_TO_MANY_ONE"],
+        ["B","C","ONE_TO_MANY_ONE"]
     ]
 }

@@ -1,0 +1,32 @@
+object quiz {
+    quiz_id <<PK>>
+    --
+
+}
+object quiz_question {
+    question_number <<PK>>
+    --
+    question
+}
+object question_answer {
+
+    --
+    answer
+    answer_type
+}
+object free_response {
+
+    --
+
+}
+object multiple_choice {
+
+    --
+    is_answer
+}
+quiz ||--|{ quiz_question
+quiz_question ||--|{ question_answer
+question_answer -- free_response : is-a
+question_answer -- free_response : is-a
+question_answer -- multiple_choice : is-a
+question_answer -- multiple_choice : is-a

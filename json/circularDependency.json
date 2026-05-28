@@ -1,0 +1,28 @@
+{
+    "Relations":{
+        "A": {
+            "attributes":{
+                "a":true,
+                "b":false
+            },
+            "weak":false
+        },
+        "B": {
+            "attributes":{
+                "c":true,
+                "d":false
+            }
+        },
+        "C": {
+            "attributes": {
+                "e": true,
+                "f": false
+            }
+        }
+    },
+    "Connections":[
+        ["A","B","ONE_TO_MANY_ONE_NID"],
+        ["B","A","ZERO_TO_MANY_ONE_NID"],
+        ["A","C","ONE_TO_MANY_ONE"]
+    ]
+}

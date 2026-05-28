@@ -179,10 +179,20 @@
             "datatypes": {
                 "is_answer": "TINYINT(1)"
             }
+        },
+        "user_course": {
+            "attributes": {
+                "join_date": false
+            },
+            "weak": true,
+            "datatypes": {
+                "join_date": "DATETIME"
+            }
         }
     },
     "Connections": [
-        ["user", "course", "MANY_TO_MANY"],
+        ["user","user_course","ONE_TO_MANY_ONE"],
+        ["course","user_course","ONE_TO_MANY_ONE"],
         ["user","login_info","ONE_TO_MANY_ONE"],
         ["course", "gradable", "ONE_TO_MANY_ZERO"],
         ["course", "announcements", "ONE_TO_MANY_ZERO"],
