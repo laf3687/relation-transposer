@@ -661,9 +661,9 @@ async function setRelations(filename: string) {
 
 async function loadRelations(filename: string) {
     const [Relations, Connections] = await setRelations(filename)
-    const transposed_relations = transpose(Relations, Connections)
-    plantUML(true, transposed_relations)
-    // relation_to_sql(Relations, Connections)
+    // const transposed_relations = transpose(Relations, Connections)
+    // plantUML(true, transposed_relations)
+    relation_to_sql(Relations, Connections)
 }
 const args = process.argv.at(2)
 
