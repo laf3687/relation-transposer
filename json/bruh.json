@@ -1,0 +1,29 @@
+{
+    "Relations": {
+        "USER": {
+            "attributes": {
+                "user_id": true,
+                "username": false
+            },
+            "datatypes": {
+                "user_id": "BIGINT UNSIGNED AUTO_INCREMENT",
+                "username": "VARCHAR(20) UNIQUE NOT NULL"
+            }
+        },
+        "DOCUMENT": {
+            "attributes": {
+                "document_id": true,
+                "document_name": false,
+                "document_data_reference": false
+            },
+            "datatypes": {
+                "document_id": "BIGINT UNSIGNED AUTO_INCREMENT",
+                "document_name": "VARCHAR(200)",
+                "document_data_reference": "VARCHAR(200)"
+            }
+        }
+    },
+    "Connections": [
+        ["USER","DOCUMENT","MANY_TO_MANY"]
+    ]
+}

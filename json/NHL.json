@@ -1,0 +1,40 @@
+{
+    "Relations": {
+        "TEAM": {
+            "attributes": {
+                "team_name": true,
+                "city": false,
+                "coach": false
+            }
+        },
+        "PLAYER": {
+            "attributes": {
+                "player_name": true,
+                "position": false,
+                "skill_level": false,
+                "is_captain?": false
+            }
+        },
+        "INJURY_RECORD": {
+            "attributes": {
+                "injury_date": false,
+                "injury_description": false
+            },
+            "weak": true
+        },
+        "GAME": {
+            "attributes": {
+                "game_date": false,
+                "team_1_score": false,
+                "team_2_score": false
+            },
+            "weak": true
+        }
+    },
+    "Connections": [
+        ["TEAM","PLAYER","ONE_TO_MANY_ONE"],
+        ["PLAYER","INJURY_RECORD","ONE_TO_MANY_ZERO"],
+        ["TEAM","GAME","ONE_TO_MANY_ZERO"],
+        ["TEAM","GAME","ONE_TO_MANY_ZERO"]
+    ]
+}

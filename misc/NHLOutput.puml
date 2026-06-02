@@ -1,0 +1,30 @@
+object TEAM {
+    team_name <<PK>>
+    --
+    city
+    coach
+}
+object PLAYER {
+    player_name <<PK>>
+    --
+    position
+    skill_level
+    is_captain?
+}
+object INJURY_RECORD {
+
+    --
+    injury_date
+    injury_description
+}
+object GAME {
+
+    --
+    game_date
+    team_1_score
+    team_2_score
+}
+TEAM ||--|{ PLAYER
+PLAYER ||--o{ INJURY_RECORD
+TEAM ||--o{ GAME
+TEAM ||--o{ GAME
