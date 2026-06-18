@@ -1,0 +1,18 @@
+{
+    "Relations": {
+        "Account": {
+            "attributes":{ 
+                "account_id": true,
+                "net_worth": false,
+                "price": false,
+                "cata_level": false
+            },
+            "datatypes": {
+                "account_id": "INT UNSIGNED AUTO_INCREMENT",
+                "net_worth": "BIGINT",
+                "price": "INT",
+                "cata_level": "INT"
+            }
+        }
+    }
+}

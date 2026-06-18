@@ -1,0 +1,36 @@
+{
+    "Relations": {
+        "Company": {
+            "attributes": {
+                "c_id": true
+            }
+        },
+        "Department": {
+            "attributes": {
+                "d_id": true
+            }
+        },
+        "Employee": {
+            "attributes": {
+                "e_id": true
+            },
+            "recursive": {
+                "e_id": "dependent_id"
+            }
+        },
+        "EmploymentHistory": {
+            "attributes": {
+                "start_range": false,
+                "end_range": false,
+                "description": false
+            },
+            "weak":true
+        }
+    },
+    "Connections": [
+        ["Company","Department","ONE_TO_MANY_ONE"],
+        ["Department","Employee","ONE_TO_MANY_ONE"],
+        ["Employee","Employee","ZERO_TO_MANY_ZERO"],
+        ["Employee","EmploymentHistory","ONE_TO_MANY_ZERO"]
+    ]
+}

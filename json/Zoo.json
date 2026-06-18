@@ -1,0 +1,36 @@
+{
+    "Relations": {
+        "Zoo_Employees": {
+            "attributes": {
+                "employee_id": true
+            }
+        },
+        "Zoo_Animals": {
+            "attributes": {
+                "animal_id": true
+            }
+        },
+        "Animal_Species": {
+            "attributes": {
+                "species_id": true
+            }
+        },
+        "Food_Type": {
+            "attributes": {
+                "food_type_id": true
+            }
+        },
+        "Food_Provider": {
+            "attributes": {
+                "food_provider_id": true
+            }
+        }
+    },
+    "Connections": [
+        ["Zoo_Employees","Zoo_Animals","ONE_TO_MANY_ZERO"],
+        ["Animal_Species","Zoo_Animals","ONE_TO_MANY_ONE"],
+        ["Food_Type","Zoo_Animals","ONE_TO_MANY_ONE"],
+        ["Food_Type","Food_Provider","MANY_TO_MANY"]
+    ]
+    
+}

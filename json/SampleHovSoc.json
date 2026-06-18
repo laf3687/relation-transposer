@@ -1,0 +1,51 @@
+{
+    "Relations": {
+        "Comittee": {
+            "attributes": {
+                "committee_id": true,
+                "role": false
+            },
+            "datatypes": {
+                "committee_id": "BIGINT UNSIGNED AUTO_INCREMENT",
+                "role": "VARCHAR(50) UNIQUE"
+            }
+        },
+        "Event": {
+            "attributes": {
+                "event_id": true,
+                "name": false,
+                "date": false,
+                "location": false,
+                "description": false
+            },
+            "datatypes": {
+                "event_id": "BIGINT UNSIGNED AUTO_INCREMENT",
+                "name": "VARCHAR(50) NOT NULL",
+                "date": "DATE",
+                "location": "VARCHAR(50)",
+                "description": "VARCHAR(255)"
+            }
+        },
+        "Member": {
+            "attributes": {
+                "member_id": true,
+                "name": false,
+                "student_number": false,
+                "email": false,
+                "hoverboard_riding_skill": false
+            },
+            "datatypes": {
+                "member_id": "BIGINT UNSIGNED AUTO_INCREMENT",
+                "name": "VARCHAR(50) NOT NULL",
+                "student_number": "INT",
+                "email": "VARCHAR(255) NOT NULL UNIQUE",
+                "hoverboard_riding_skill": "INT UNSIGNED"
+            }
+        }
+    },
+    "Connections": [
+        ["Comittee","Member","ONE_TO_MANY_ONE"],
+        ["Event","Member","ONE_TO_MANY_ONE"],
+        ["Member","Event","ONE_TO_ZERO"]
+    ]
+}
