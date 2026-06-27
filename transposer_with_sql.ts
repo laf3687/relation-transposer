@@ -2,13 +2,12 @@
 import { Attribute, Relation, Connection, Queue } from "./erClasses.ts"
 import fs from "node:fs/promises";
 
-
-
 const allowMultiConnections = true;
 const allowRecursiveDistinctRelationBeta = true;
 
 const theLazyWay = true;
 
+const tableCreationEngineCharsetString: string = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 
 function colorString(text: string, r: number, g: number, b: number): string {
     return `\x1b[38;2;${r};${g};${b}m${text}\x1b[0m`
@@ -551,7 +550,11 @@ function relation_to_sql(Relations: Object, Connections: any[]) {
             stringArray.push(defaultString)
         })
         createStatement += stringArray.join(",")
-        createStatement += "\n);"
+        createStatement += `\n)`
+        if (tableCreationEngineCharsetString !== "") {
+            createStatement += " " + colorString(tableCreationEngineCharsetString,192,0,0)
+        }
+        createStatement += ";"
         console.log(createStatement)
     })
 }

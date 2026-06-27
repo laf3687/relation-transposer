@@ -1,0 +1,67 @@
+{
+    "Relations": {
+        "1": {
+            "attributes": {
+                "a": true,
+                "b": false
+            }
+        },
+        "2": {
+            "attributes": {
+                "d": true,
+                "f": false,
+                "g": false,
+                "h": false
+            }
+        },
+        "4": {
+            "attributes": {
+                "l": true,
+                "m": true,
+                "n": true,
+                "i": false,
+                "j": false
+            }
+        },
+        "3": {
+            "attributes": {
+                "p": true,
+                "q": true,
+                "r": false      
+            }
+        },
+        "5": {
+            "attributes": {
+                "s": false
+            }
+        },
+        "6": {
+            "attributes": {
+                "t": true,
+                "u": false
+            }
+        },
+        "7": {
+            "attributes": {
+                "w": false
+            }
+        },
+        "8": {
+            "attributes": {
+                "y": false,
+                "z": false
+            }
+        }
+
+    },
+    "Connections": [
+        ["2","1","ZERO_TO_MANY_ZERO_NID"],
+        ["1","1","ONE_TO_MANY_ZERO_NID"],
+        ["2","4","MANY_TO_MANY"],
+        ["3","4","ONE_TO_ZERO_NID"],
+        ["3","5","ONE_TO_MANY_ZERO"],
+        ["6","5","ONE_TO_MANY_ZERO"],
+        ["6","7","SUPER_TO_SUBTYPE"],
+        ["6","8","SUPER_TO_SUBTYPE"]
+    ]
+}
