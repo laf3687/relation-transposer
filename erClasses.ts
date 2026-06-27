@@ -18,10 +18,10 @@ export class Attribute {
     public identifier: boolean;
     public foreignKey: boolean;
     public datatype?: string;
-    public foriegnKeyNotNULL = false;
+    public foreignKeyNotNULL = false;
     // 5/15/26 new addition for custom set recursive attribute names
     public recursiveAttributeName?: string;
-    // 5/23/26 obtained from attribute for foreignkeys
+    // 5/23/26 obtained from attribute for foreigners
     public obtainedFrom: unknown;
     public isNative: boolean;
     constructor(name: string, identifierBoolean: boolean, foreignKeyBoolean: boolean, obtainedFrom: unknown = null, isNative: boolean) {
@@ -45,7 +45,7 @@ export class Attribute {
     }
 
     setForeignKeyNotNull(boolean: boolean) {
-        this.foriegnKeyNotNULL = boolean
+        this.foreignKeyNotNULL = boolean
     }
 
     setDatatype(dt: string) {
@@ -227,7 +227,7 @@ export class Connection {
         return this.relation2 || new Relation("____NULL", [])
     }
 }
-// 5/16/25 adding a queue datastructure 
+// 5/16/25 adding a queue data structure 
 export class Queue<T> {
     private queueData: T[];
     private frontIndex;

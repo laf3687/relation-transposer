@@ -292,9 +292,10 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                     let rlConnTypeData = relationshipConnectionsTable[c.connectionType]
                     if (relation === r2) {
                         // console.log("HIT")
-                        let newNum = relMapByHits.get(relation) || 0 // should NEVER trigger 0 but ok bruh.
+                        let newNum = relMapByHits.get(relation)
                         // check for recursion
                         if (r1 !== r2) {
+                            // @ts-ignore
                             relMapByHits.set(relation, newNum + 1)
                         }
                         if (!connectionIndex.has(relation)) {
@@ -306,15 +307,12 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                 }
             })
         })
-
         // console.log(connectionIndex)
-
         connections.forEach((c) => {
             if (c.connectionType === Cardinality.MANY_TO_MANY) {
                 MtMConnections.push(c)
             }
         })
-
 
         // console.log(relMapByHits)
         let maxConnections = 0
@@ -374,9 +372,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
                             } else {
                                 // console.log(superQueueRelations.get(i))
                                 if (superQueueRelations.get(i)?.has(relation1)) {
-                                    // console.log('beuhhh')
                                     console.log("placing " + relationObject.name + " in the super queue (layer " + hitsOfRelation1 + ") (3) due to premature connection!")
-
                                     if (hitsOfRelation1 && hitsOfMyRelation) {
                                         if (!layerQueues.has(hitsOfRelation1)) {
                                             layerQueues.set(hitsOfRelation1, new Queue<Connection>())
@@ -498,7 +494,7 @@ function relation_to_sql(Relations: Object, Connections: any[]) {
                 stringArray.push(`\n\n    ${colorString("# ----[ FOREIGN KEYS ]----", 188, 20, 34)}`)
                 displayedFKComment = true;
             }
-            if (a.isForeignKey() && !a.isIdentifier() && a.foriegnKeyNotNULL == true) { // if FK and NOT PK and if it is signified from a 1 on the ER diagram, Not Null is required.
+            if (a.isForeignKey() && !a.isIdentifier() && a.foreignKeyNotNULL == true) { // if FK and NOT PK and if it is signified from a 1 on the ER diagram, Not Null is required.
                 defaultString += colorString(" NOT NULL", 255, 40, 40)
             }
 
@@ -552,7 +548,7 @@ function relation_to_sql(Relations: Object, Connections: any[]) {
         createStatement += stringArray.join(",")
         createStatement += `\n)`
         if (tableCreationEngineCharsetString !== "") {
-            createStatement += " " + colorString(tableCreationEngineCharsetString,192,0,0)
+            createStatement += " " + colorString(tableCreationEngineCharsetString, 192, 0, 0)
         }
         createStatement += ";"
         console.log(createStatement)
@@ -658,7 +654,7 @@ async function setRelations(filename: string) {
         let Connections = items.Connections
         return [Relations, Connections]
     } catch (error) {
-        throw new Error("Error. Filename incorrect, or fomatting is incorrect.")
+        throw new Error("Error. Filename incorrect, or formatting is incorrect.")
     }
 }
 
