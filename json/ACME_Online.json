@@ -83,6 +83,6 @@
         ["HOME","GUARANTEE","ONE_TO_MANY_ZERO"],
         ["ORDER","GUARANTEE","ONE_TO_MANY_ZERO"],
         ["BUSINESS","PURCHASE_CONTACT","ONE_TO_MANY_ONE"]
-
-    ]
+    ],
+    "Query": "CUSTOMER > HOME > GUARANTEE > ORDER > OFFER"
 }

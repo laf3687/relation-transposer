@@ -211,5 +211,6 @@
         ["staff","teacher_assistant","SUPER_TO_SUBTYPE"],
         ["student","student_gradable","ONE_TO_MANY_ZERO"],
         ["gradable","student_gradable","ONE_TO_MANY_ZERO"]
-    ]
+    ],
+    "Query": "user > student > student_gradable"
 }

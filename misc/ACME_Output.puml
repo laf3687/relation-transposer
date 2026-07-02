@@ -1,32 +1,76 @@
-object quiz {
-    quiz_id <<PK>>
+object CATEGORY {
+    category_name <<PK>>
     --
-
+    shipping_per_pound
+    offers_allowed
 }
-object quiz_question {
-    question_number <<PK>>
+object OFFER {
+    offer_code <<PK>>
     --
-    question
+    discount_amt
+    min_amount
+    application_date
 }
-object question_answer {
-
+object CUSTOMER {
+    customer_id <<PK>>
     --
-    answer
-    answer_type
+    customer_name
+    address
+    email
 }
-object free_response {
-
+object ITEM {
+    item_number <<PK>>
     --
-
+    item_name
+    description
+    modem_number
+    category_name <<FK>>
 }
-object multiple_choice {
-
+object BUSINESS {
+    customer_id <<PK, FK>>
     --
-    is_answer
+    payment_terms
 }
-quiz ||--|{ quiz_question
-quiz_question ||--|{ question_answer
-question_answer -- free_response : is-a
-question_answer -- free_response : is-a
-question_answer -- multiple_choice : is-a
-question_answer -- multiple_choice : is-a
+object HOME {
+    customer_id <<PK, FK>>
+    --
+    credit_card_num
+    card_expiration_date
+}
+object PURCHASE_CONTACT {
+    contact_name <<PK>>
+    --
+    contact_phone
+    business_customer_id <<FK>>
+}
+object ORDER {
+    order_id <<PK>>
+    --
+    total_cost
+    offer_code <<FK>>
+    customer_id <<FK>>
+}
+object GUARANTEE {
+    home_customer_id <<PK, FK>>
+    order_id <<PK, FK>>
+    --
+    url
+    refund_amount
+}
+object LINE_ITEM {
+    item_number <<PK, FK>>
+    order_id <<PK, FK>>
+    --
+    quantity
+    shipping_amount
+}
+CATEGORY ||..|{ ITEM
+CUSTOMER -- BUSINESS : is-a
+CUSTOMER -- HOME : is-a
+BUSINESS ||--|{ PURCHASE_CONTACT
+OFFER |o..o{ ORDER
+CUSTOMER ||..o{ ORDER
+HOME ||--o{ GUARANTEE
+ORDER ||--o{ GUARANTEE
+ITEM ||--o{ LINE_ITEM
+ORDER ||--|{ LINE_ITEM

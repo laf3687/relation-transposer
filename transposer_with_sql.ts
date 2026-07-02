@@ -9,7 +9,7 @@ const theLazyWay = true;
 
 const tableCreationEngineCharsetString: string = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 
-function colorString(text: string, r: number, g: number, b: number): string {
+function colorString(text: string | undefined, r: number, g: number, b: number): string {
     return `\x1b[38;2;${r};${g};${b}m${text}\x1b[0m`
 }
 
@@ -652,17 +652,120 @@ async function setRelations(filename: string) {
         const items = JSON.parse(response)
         let Relations = items.Relations
         let Connections = items.Connections
-        return [Relations, Connections]
+        let QueryString = items.Query || ""
+        return [Relations, Connections, QueryString]
     } catch (error) {
         throw new Error("Error. Filename incorrect, or formatting is incorrect.")
     }
 }
 
+function createJoin(relation1: Relation | undefined, relation2: Relation | undefined, flipped: boolean, superflipped: boolean = false): string {
+    let meiMap = new Map<String, Map<String, String>[]>()
+    let found = false
+
+    if (flipped) {
+        [relation1, relation2] = [relation2, relation1]
+    }
+
+    relation2?.mustExistIn.forEach(m => {
+        if (m.relationConnection === relation1) {
+            found = true
+            let attributeName = m.attributeName
+            let referenceName = m.attributeName
+            if (m.mainPKNameRecursive !== "null") {
+                referenceName = m.mainPKNameRecursive
+            }
+            let relationName = m.relationConnection.name
+            if (!meiMap.has(relationName)) {
+                meiMap.set(relationName, [])
+            }
+            let referenceObject = new Map()
+            referenceObject.set("attributeName", attributeName)
+            referenceObject.set("referenceName", referenceName)
+            meiMap.get(relationName)?.push(referenceObject)
+        }
+    })
+    if (!found) {
+        throw new Error("Cannot join as relation1 does not connect to relation2.")
+    }
+    const joinOn: string[] = []
+    if (superflipped) {
+        [relation1, relation2] = [relation2, relation1]
+    }
+    meiMap.forEach((params, attribute) => {
+        for (let map of params) {
+            joinOn.push(`${colorString(relation1?.name.toString(), 255, 255, 0)}.${map.get("referenceName")} = ${colorString(relation2?.name.toString(), 255, 255, 0)}.${map.get("attributeName")}`)
+        }
+    })
+    return `${colorString("JOIN", 0, 0, 192)} ${colorString(relation2?.name.toString(), 255, 255, 0)} ${colorString("ON", 0, 0, 192)} ${joinOn.join(` ${colorString("AND", 0, 0, 192)} `)}`
+}
+
+function createStatement(transposed_relations: Map<String, Relation>, input: string) {
+    const relations = input.split(" > ")
+    relations.forEach((r) => {
+        if (!transposed_relations.has(r)) {
+            throw new Error(r + " relation does not exist.")
+        }
+    })
+
+    const statement: { mainRelation: string, select: string[], joins: string[] } = {
+        mainRelation: "",
+        select: [],
+        joins: []
+    }
+    const joined: Set<Relation> = new Set<Relation>()
+    for (let i = 0; i < relations.length - 1; i++) {
+        const r1 = transposed_relations.get(relations[i])
+        const r2 = transposed_relations.get(relations[i + 1])
+        if (!r1) { throw new Error(relations[i] + " does not exist.") }
+        if (!r2) { throw new Error(relations[i + 1] + " does not exist.") }
+        if (!statement.mainRelation) {
+            // NOTE: please fix     ->              [this]
+            statement.mainRelation = colorString(r1.name.toString(), 255, 255, 0)
+        }
+        let flipped = false
+        try {
+            statement.joins.push(createJoin(r1, r2, false))
+            joined.add(r2)
+        } catch {
+            try {
+                if (joined.has(r1)) {
+                    // console.log("      " + r1.name)
+                    statement.joins.push(createJoin(r1, r2, true, true))
+                } else {
+                    statement.joins.push(createJoin(r1, r2, true))
+
+                }
+                joined.add(r2)
+                flipped = true
+            } catch (err: any) {
+                throw new Error(err?.message)
+            }
+        }
+        // console.log([...joined].forEach(e => console.log(e.name)))
+        let mainRelation = r1
+        if (flipped) {
+            mainRelation = r2
+        }
+        if (!(mainRelation.isSubType() || mainRelation.weak)) {
+            for (const pk of mainRelation.getPrimaryKeys()) {
+                statement.select.push(`${colorString(mainRelation.name.toString(), 255, 255, 0)}.${pk[1].name}`)
+            }
+        }
+    }
+    let selectStatement = `${colorString("SELECT", 0, 0, 192)} ${statement.select.join(", ")}\n${colorString("FROM", 0, 0, 192)} ${statement.mainRelation}\n${statement.joins.join("\n")};`
+    console.log(selectStatement)
+}
+
 async function loadRelations(filename: string) {
-    const [Relations, Connections] = await setRelations(filename)
-    // const transposed_relations = transpose(Relations, Connections)
-    // plantUML(true, transposed_relations)
-    relation_to_sql(Relations, Connections)
+    const [Relations, Connections, Query] = await setRelations(filename)
+    const transposed_relations = transpose(Relations, Connections)
+    // plantUML(false, transposed_relations)
+    // relation_to_sql(Relations, Connections)
+    console.log("---------------------------------------------")
+    if (Query) {
+        createStatement(transposed_relations, Query)
+    }
 }
 const args = process.argv.at(2)
 
