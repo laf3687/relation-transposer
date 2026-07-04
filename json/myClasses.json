@@ -212,5 +212,5 @@
         ["student","student_gradable","ONE_TO_MANY_ZERO"],
         ["gradable","student_gradable","ONE_TO_MANY_ZERO"]
     ],
-    "Query": "user > student > student_gradable"
+    "Query": "user > user_course > course"
 }

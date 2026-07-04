@@ -719,10 +719,6 @@ function createStatement(transposed_relations: Map<String, Relation>, input: str
         const r2 = transposed_relations.get(relations[i + 1])
         if (!r1) { throw new Error(relations[i] + " does not exist.") }
         if (!r2) { throw new Error(relations[i + 1] + " does not exist.") }
-        if (!statement.mainRelation) {
-            // NOTE: please fix     ->              [this]
-            statement.mainRelation = colorString(r1.name.toString(), 255, 255, 0)
-        }
         let flipped = false
         try {
             statement.joins.push(createJoin(r1, r2, false))
@@ -744,6 +740,13 @@ function createStatement(transposed_relations: Map<String, Relation>, input: str
         }
         // console.log([...joined].forEach(e => console.log(e.name)))
         let mainRelation = r1
+        if (!statement.mainRelation) {
+            if (!flipped) {
+                statement.mainRelation = colorString(r1.name.toString(), 255, 255, 0)
+            } else {
+                statement.mainRelation = colorString(r2.name.toString(), 255, 255, 0)
+            }
+        }
         if (flipped) {
             mainRelation = r2
         }

@@ -64,5 +64,6 @@
         ["6","5","ONE_TO_MANY_ZERO"],
         ["6","7","SUPER_TO_SUBTYPE"],
         ["6","8","SUPER_TO_SUBTYPE"]
-    ]
+    ],
+    "Query": "1 > 2 > 2_4 > 4"
 }
