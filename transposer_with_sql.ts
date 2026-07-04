@@ -7,7 +7,8 @@ const allowRecursiveDistinctRelationBeta = true;
 
 const theLazyWay = true;
 
-const tableCreationEngineCharsetString: string = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+// const tableCreationEngineCharsetString: string = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+const tableCreationEngineCharsetString: string = ""
 
 function colorString(text: string | undefined, r: number, g: number, b: number): string {
     return `\x1b[38;2;${r};${g};${b}m${text}\x1b[0m`
@@ -166,6 +167,7 @@ function setManyToManyConnection(relation1: Relation, relation2: Relation, extra
     let newRelation = new Relation(relation1.name + "_" + relation2.name, [])
     setOneToManyConnection(relation1, newRelation, true, true, true, false, Cardinality.ONE_TO_MANY_ONE)
     setOneToManyConnection(relation2, newRelation, true, true, true, false, Cardinality.ONE_TO_MANY_ONE)
+    newRelation.weak = true
     return newRelation
 }
 
@@ -473,8 +475,7 @@ function transpose(rls: Object, cctns: string[][] | any[]) {
 
 
 
-function relation_to_sql(Relations: Object, Connections: any[]) {
-    let relations = transpose(Relations, Connections);
+function relation_to_sql(relations: Map<String, Relation>) {
     console.log("-----------------------------------------------------------------------------------")
     // relations.forEach(r => {
     //     console.log(`DROP TABLE IF EXISTS ${r.name.toLowerCase()};`)
@@ -694,10 +695,10 @@ function createJoin(relation1: Relation | undefined, relation2: Relation | undef
     }
     meiMap.forEach((params, attribute) => {
         for (let map of params) {
-            joinOn.push(`${colorString(relation1?.name.toString(), 255, 255, 0)}.${map.get("referenceName")} = ${colorString(relation2?.name.toString(), 255, 255, 0)}.${map.get("attributeName")}`)
+            joinOn.push(`${colorString(relation1?.name, 255, 255, 0)}.${map.get("referenceName")} = ${colorString(relation2?.name, 255, 255, 0)}.${map.get("attributeName")}`)
         }
     })
-    return `${colorString("JOIN", 0, 0, 192)} ${colorString(relation2?.name.toString(), 255, 255, 0)} ${colorString("ON", 0, 0, 192)} ${joinOn.join(` ${colorString("AND", 0, 0, 192)} `)}`
+    return `${colorString("JOIN", 0, 0, 192)} ${colorString(relation2?.name, 255, 255, 0)} ${colorString("ON", 0, 0, 192)} ${joinOn.join(` ${colorString("AND", 0, 0, 192)} `)}`
 }
 
 function createStatement(transposed_relations: Map<String, Relation>, input: string) {
@@ -707,11 +708,15 @@ function createStatement(transposed_relations: Map<String, Relation>, input: str
             throw new Error(r + " relation does not exist.")
         }
     })
-
-    const statement: { mainRelation: string, select: string[], joins: string[] } = {
+    const statement: { mainRelation: string, select: Set<string>, joins: string[] } = {
         mainRelation: "",
-        select: [],
+        select: new Set<string>(),
         joins: []
+    }
+    function pushKeys(r: Relation, statement: { mainRelation: string, select: Set<string>, joins: string[] }) {
+        for (const pk of r.getPrimaryKeys()) {
+            statement.select.add(`${colorString(r.name, 255, 255, 0)}.${pk[1].name}`)
+        }
     }
     const joined: Set<Relation> = new Set<Relation>()
     for (let i = 0; i < relations.length - 1; i++) {
@@ -720,14 +725,15 @@ function createStatement(transposed_relations: Map<String, Relation>, input: str
         if (!r1) { throw new Error(relations[i] + " does not exist.") }
         if (!r2) { throw new Error(relations[i + 1] + " does not exist.") }
         let flipped = false
+        let superflipped = false
         try {
             statement.joins.push(createJoin(r1, r2, false))
             joined.add(r2)
         } catch {
             try {
                 if (joined.has(r1)) {
-                    // console.log("      " + r1.name)
                     statement.joins.push(createJoin(r1, r2, true, true))
+                    superflipped = true
                 } else {
                     statement.joins.push(createJoin(r1, r2, true))
 
@@ -742,32 +748,37 @@ function createStatement(transposed_relations: Map<String, Relation>, input: str
         let mainRelation = r1
         if (!statement.mainRelation) {
             if (!flipped) {
-                statement.mainRelation = colorString(r1.name.toString(), 255, 255, 0)
+                statement.mainRelation = colorString(r1.name, 255, 255, 0)
             } else {
-                statement.mainRelation = colorString(r2.name.toString(), 255, 255, 0)
+                statement.mainRelation = colorString(r2.name, 255, 255, 0)
             }
         }
-        if (flipped) {
-            mainRelation = r2
+        if (!r1.isSubType() && !r1.weak) {
+            pushKeys(r1,statement)
         }
-        if (!(mainRelation.isSubType() || mainRelation.weak)) {
-            for (const pk of mainRelation.getPrimaryKeys()) {
-                statement.select.push(`${colorString(mainRelation.name.toString(), 255, 255, 0)}.${pk[1].name}`)
+        if (!r2.isSubType() && !r2.weak) {
+            pushKeys(r2, statement)
+        }
+        if (r1 == r2) {
+            for (const attribute of mainRelation.getAttributes()) {
+                if (attribute[1].obtainedFrom && attribute[1].obtainedFrom === r1) {
+                    statement.select.add(`${colorString(mainRelation.name.toString(), 255, 255, 0)}.${attribute[1].name}`)
+                }
             }
         }
     }
-    let selectStatement = `${colorString("SELECT", 0, 0, 192)} ${statement.select.join(", ")}\n${colorString("FROM", 0, 0, 192)} ${statement.mainRelation}\n${statement.joins.join("\n")};`
+    let selectStatement = `${colorString("SELECT", 0, 0, 192)} ${[...statement.select].join(", ")}\n${colorString("FROM", 0, 0, 192)} ${statement.mainRelation}\n${statement.joins.join("\n")};`
     console.log(selectStatement)
 }
 
 async function loadRelations(filename: string) {
     const [Relations, Connections, Query] = await setRelations(filename)
-    const transposed_relations = transpose(Relations, Connections)
-    // plantUML(false, transposed_relations)
-    // relation_to_sql(Relations, Connections)
+    const transposedRelations = transpose(Relations, Connections)
+    // plantUML(false, transposedRelations)
+    relation_to_sql(transposedRelations)
     console.log("---------------------------------------------")
     if (Query) {
-        createStatement(transposed_relations, Query)
+        createStatement(transposedRelations, Query)
     }
 }
 const args = process.argv.at(2)

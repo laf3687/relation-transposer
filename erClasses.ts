@@ -22,9 +22,9 @@ export class Attribute {
     // 5/15/26 new addition for custom set recursive attribute names
     public recursiveAttributeName?: string;
     // 5/23/26 obtained from attribute for foreigners
-    public obtainedFrom: unknown;
+    public obtainedFrom: Relation | null;
     public isNative: boolean;
-    constructor(name: string, identifierBoolean: boolean, foreignKeyBoolean: boolean, obtainedFrom: unknown = null, isNative: boolean) {
+    constructor(name: string, identifierBoolean: boolean, foreignKeyBoolean: boolean, obtainedFrom: Relation | null = null, isNative: boolean) {
         this.name = name
         this.identifier = identifierBoolean
         this.foreignKey = foreignKeyBoolean
@@ -85,7 +85,7 @@ export class Relation {
     }
 
 
-    constructor(name: String, attributesIterable: Attribute[]) {
+    constructor(name: string, attributesIterable: Attribute[]) {
         this.name = name;
         attributesIterable.forEach(element => {
             this.attributes.set(element.name, element)
